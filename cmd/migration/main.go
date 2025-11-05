@@ -14,66 +14,67 @@ import (
 
 func main() {
 	// Parse flags
-	up := flag.Bool("up", false, "Run migration up (create)")     // docker-compose exec app go run cmd/migration/main.go --up
-	down := flag.Bool("down", false, "Run migration down (drop)") // docker-compose exec app go run cmd/migration/main.go --down
+	up := flag.Bool("up", false, "Run migration up (create)")                                  // docker-compose exec app go run cmd/migration/main.go --up
+	down := flag.Bool("down", false, "Run migration down (drop)")                              // docker-compose exec app go run cmd/migration/main.go --down
+	fill := flag.Bool("fill", false, "Fill table with top US airports via SQL (implies --up)") // docker-compose exec app go run cmd/migration/main.go --fill
 	flag.Parse()
 
-	// VERIFY: docker-compose exec postgres psql -U postgres -d aviation_weather -c "\d airport"
+	// VERIFY TABLE: docker-compose exec postgres psql -U postgres -d aviation_weather -c "\d airport"
 
-	// Default: --up
-	if !*up && !*down {
+	// Default flag behavior
+	switch {
+	case *fill && *down:
+		log.Fatal("error: cannot use --fill with --down")
+	case *up && *down:
+		log.Fatal("error: cannot specify both --up and --down")
+	case !*up && !*down && !*fill:
 		*up = true
 		log.Println("No flags provided; defaulting to --up")
 	}
 
-	// Can't do both!
-	if *up && *down {
-		log.Fatal("Error: Cannot specify both --up and --down")
+	if *fill {
+		*up = true
+		log.Println("--fill requested: Will run --up then seed data")
 	}
 
-	// Load config
+	// Load config and connect
 	cfg := config.Load()
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
+		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName,
+	)
 
-	// Build Data Source Name (DSN)
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
-
-	// Connect to DB
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("Error connecting to DB: %v", err)
+		log.Fatalf("db connection error: %v", err)
 	}
 	defer db.Close()
 
-	// Test connection
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Error pinging DB: %v", err)
+		log.Fatalf("db ping error: %v", err)
 	}
 	log.Println("Connected to PostgreSQL")
 
-	// Determine and read SQL file
-	var filename string
-	if *up {
-		filename = "migrations/create_airport.up.sql"
-	} else {
-		filename = "migrations/drop_airport.down.sql"
+	// Run migration
+	runMigration := func(filename, action string) {
+		sqlBytes, err := os.ReadFile(filename)
+		if err != nil {
+			log.Fatalf("error reading %s: %v", filename, err)
+		}
+		if _, err := db.Exec(string(sqlBytes)); err != nil {
+			log.Fatalf("error executing %s: %v", filename, err)
+		}
+		log.Printf("%s completed: %s", action, filename)
 	}
 
-	// Read SQL to memory
-	sqlBytes, err := os.ReadFile(filename)
-	if err != nil {
-		log.Fatalf("Error reading migration file %s: %v", filename, err)
-	}
-
-	// Execute migration
-	_, err = db.Exec(string(sqlBytes))
-	if err != nil {
-		log.Fatalf("Error executing migration %s: %v", filename, err)
-	}
-
-	if *up {
-		log.Println("Migration up completed: Airport table created")
-	} else {
-		log.Println("Migration down completed: Airport table dropped")
+	switch {
+	case *down:
+		runMigration("migrations/drop_airport.down.sql", "Migration down")
+		return // Early exit after down—no fill possible
+	case *up:
+		runMigration("migrations/create_airport.up.sql", "Migration up")
+		if *fill {
+			runMigration("migrations/fill_airport.fill.sql", "Fill (seed data)")
+		}
 	}
 }
