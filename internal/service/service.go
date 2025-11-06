@@ -74,27 +74,7 @@ func (s *Service) fetchAirportFromAviationAPI(faa string) (*domain.Airport, erro
 		return nil, err
 	}
 
-	// Temporary struct for unmarshal (API returns lat/long as strings)
-	type apiAirport struct {
-		SiteNumber    string `json:"site_number"`
-		FacilityName  string `json:"facility_name"`
-		Faa           string `json:"faa"`
-		Icao          string `json:"icao"`
-		StateCode     string `json:"state_code"`
-		StateFull     string `json:"state_full"`
-		County        string `json:"county"`
-		City          string `json:"city"`
-		OwnershipType string `json:"ownership_type"`
-		UseType       string `json:"use_type"`
-		Manager       string `json:"manager"`
-		ManagerPhone  string `json:"manager_phone"`
-		Latitude      string `json:"latitude"`  // String for unmarshal
-		Longitude     string `json:"longitude"` // String for unmarshal
-		AirportStatus string `json:"airport_status"`
-		// Weather not in API
-	}
-
-	var airports map[string][]apiAirport
+	var airports map[string][]domain.Airport
 	if err := json.Unmarshal(body, &airports); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Aviation API response: %w", err)
 	}
