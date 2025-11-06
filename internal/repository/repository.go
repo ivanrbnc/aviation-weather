@@ -27,70 +27,33 @@ func (r *Repository) GetByFAA(faa string) (*domain.Airport, error) {
 
 	var airport domain.Airport
 
-	// Nullable fields: Use Null types for scan
-	var siteNumber, county, manager, managerPhone, weather sql.NullString
+	// All fields except faa are nullable: Use Null types for scan
+	var siteNumber, facilityName, icao, stateCode, stateFull, county, city, ownershipType, useType, manager, managerPhone, airportStatus, weather sql.NullString
 	var latitude, longitude sql.NullFloat64
 
 	err := row.Scan(
-		&siteNumber, // nullable
-		&airport.FacilityName,
+		&siteNumber,
+		&facilityName,
 		&airport.Faa,
-		&airport.Icao,
-		&airport.StateCode,
-		&airport.StateFull,
-		&county, // nullable
-		&airport.City,
-		&airport.OwnershipType,
-		&airport.UseType,
-		&manager,      // nullable
-		&managerPhone, // nullable
-		&latitude,     // nullable
-		&longitude,    // nullable
-		&airport.AirportStatus,
-		&weather, // nullable
+		&icao,
+		&stateCode,
+		&stateFull,
+		&county,
+		&city,
+		&ownershipType,
+		&useType,
+		&manager,
+		&managerPhone,
+		&latitude,
+		&longitude,
+		&airportStatus,
+		&weather,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // Not found
 		}
 		return nil, fmt.Errorf("failed to get airport by FAA %s: %w", faa, err)
-	}
-
-	// Set defaults for nullables
-	if siteNumber.Valid {
-		airport.SiteNumber = siteNumber.String
-	} else {
-		airport.SiteNumber = ""
-	}
-	if county.Valid {
-		airport.County = county.String
-	} else {
-		airport.County = ""
-	}
-	if manager.Valid {
-		airport.Manager = manager.String
-	} else {
-		airport.Manager = ""
-	}
-	if managerPhone.Valid {
-		airport.ManagerPhone = managerPhone.String
-	} else {
-		airport.ManagerPhone = ""
-	}
-	if latitude.Valid {
-		airport.Latitude = latitude.Float64
-	} else {
-		airport.Latitude = 0.0
-	}
-	if longitude.Valid {
-		airport.Longitude = longitude.Float64
-	} else {
-		airport.Longitude = 0.0
-	}
-	if weather.Valid {
-		airport.Weather = weather.String
-	} else {
-		airport.Weather = ""
 	}
 
 	return &airport, nil
@@ -149,67 +112,30 @@ func (r *Repository) GetAllAirports() ([]domain.Airport, error) {
 	for rows.Next() {
 		var airport domain.Airport
 
-		// Nullable fields: Use Null types for scan
-		var siteNumber, county, manager, managerPhone, weather sql.NullString
+		// All fields except faa are nullable: Use Null types for scan
+		var siteNumber, facilityName, icao, stateCode, stateFull, county, city, ownershipType, useType, manager, managerPhone, airportStatus, weather sql.NullString
 		var latitude, longitude sql.NullFloat64
 
 		err := rows.Scan(
-			&siteNumber, // nullable
-			&airport.FacilityName,
+			&siteNumber,
+			&facilityName,
 			&airport.Faa,
-			&airport.Icao,
-			&airport.StateCode,
-			&airport.StateFull,
-			&county, // nullable
-			&airport.City,
-			&airport.OwnershipType,
-			&airport.UseType,
-			&manager,      // nullable
-			&managerPhone, // nullable
-			&latitude,     // nullable
-			&longitude,    // nullable
-			&airport.AirportStatus,
-			&weather, // nullable
+			&icao,
+			&stateCode,
+			&stateFull,
+			&county,
+			&city,
+			&ownershipType,
+			&useType,
+			&manager,
+			&managerPhone,
+			&latitude,
+			&longitude,
+			&airportStatus,
+			&weather,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan airport row: %w", err)
-		}
-
-		// Set defaults for nullables (same as GetByFAA)
-		if siteNumber.Valid {
-			airport.SiteNumber = siteNumber.String
-		} else {
-			airport.SiteNumber = ""
-		}
-		if county.Valid {
-			airport.County = county.String
-		} else {
-			airport.County = ""
-		}
-		if manager.Valid {
-			airport.Manager = manager.String
-		} else {
-			airport.Manager = ""
-		}
-		if managerPhone.Valid {
-			airport.ManagerPhone = managerPhone.String
-		} else {
-			airport.ManagerPhone = ""
-		}
-		if latitude.Valid {
-			airport.Latitude = latitude.Float64
-		} else {
-			airport.Latitude = 0.0
-		}
-		if longitude.Valid {
-			airport.Longitude = longitude.Float64
-		} else {
-			airport.Longitude = 0.0
-		}
-		if weather.Valid {
-			airport.Weather = weather.String
-		} else {
-			airport.Weather = ""
 		}
 
 		airports = append(airports, airport)

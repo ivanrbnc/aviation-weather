@@ -23,10 +23,11 @@ func (h *Handler) Router() *chi.Mux {
 
 	// Routes
 	r.Get("/health", h.healthCheck)
-	r.Get("/airports/{faa}", h.getAirportWithWeather)
-	r.Get("/airports", h.getAllAirportsWithWeather)
+	r.Get("/airports/{faa}", h.getAirportWithWeather) // YES
+	r.Get("/airports", h.getAllAirportsWithWeather)   // YES
 	r.Post("/sync", h.syncAllAirports)
-	r.Delete("/airports/{faa}", h.deleteAirportByFAA)
+	r.Post("/sync/{faa}", h.syncAirportByFAA)
+	r.Delete("/airports/{faa}", h.deleteAirportByFAA) // YES
 
 	return r
 }
@@ -71,7 +72,7 @@ func (h *Handler) getAllAirportsWithWeather(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(airports) // JSON array of airports
 }
 
-// syncAllAirports: Bulk updates all airports with real API data
+// syncAllAirports: Bulk updates all airports with real API data.
 func (h *Handler) syncAllAirports(w http.ResponseWriter, r *http.Request) {
 	updated, err := h.svc.SyncAllAirports()
 	if err != nil {
@@ -83,6 +84,31 @@ func (h *Handler) syncAllAirports(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  "ok",
 		"updated": updated,
+	})
+}
+
+// syncAirportByFAA: Syncs a single airport by FAA (fetches APIs, updates DB).
+func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
+	faa := chi.URLParam(r, "faa")
+	if faa == "" {
+		http.Error(w, `{"error": "missing faa parameter"}`, http.StatusBadRequest)
+		return
+	}
+
+	airport, err := h.svc.GetAirportWithWeather(faa)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err), http.StatusInternalServerError)
+		return
+	}
+	if airport == nil {
+		http.Error(w, `{"error": "no data found for sync"}`, http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "synced",
+		"airport": airport,
 	})
 }
 

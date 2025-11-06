@@ -74,7 +74,27 @@ func (s *Service) fetchAirportFromAviationAPI(faa string) (*domain.Airport, erro
 		return nil, err
 	}
 
-	var airports map[string][]domain.Airport
+	// Temporary struct for unmarshal (API returns lat/long as strings)
+	type apiAirport struct {
+		SiteNumber    string `json:"site_number"`
+		FacilityName  string `json:"facility_name"`
+		Faa           string `json:"faa"`
+		Icao          string `json:"icao"`
+		StateCode     string `json:"state_code"`
+		StateFull     string `json:"state_full"`
+		County        string `json:"county"`
+		City          string `json:"city"`
+		OwnershipType string `json:"ownership_type"`
+		UseType       string `json:"use_type"`
+		Manager       string `json:"manager"`
+		ManagerPhone  string `json:"manager_phone"`
+		Latitude      string `json:"latitude"`  // String for unmarshal
+		Longitude     string `json:"longitude"` // String for unmarshal
+		AirportStatus string `json:"airport_status"`
+		// Weather not in API
+	}
+
+	var airports map[string][]apiAirport
 	if err := json.Unmarshal(body, &airports); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Aviation API response: %w", err)
 	}
@@ -84,8 +104,27 @@ func (s *Service) fetchAirportFromAviationAPI(faa string) (*domain.Airport, erro
 		return nil, nil // Not found
 	}
 
-	// Take first since FAA is unique
-	return &airportList[0], nil
+	// Take first since FAA is unique; parse lat/long to float64
+	apiApt := airportList[0]
+
+	return &domain.Airport{
+		SiteNumber:    apiApt.SiteNumber,
+		FacilityName:  apiApt.FacilityName,
+		Faa:           apiApt.Faa,
+		Icao:          apiApt.Icao,
+		StateCode:     apiApt.StateCode,
+		StateFull:     apiApt.StateFull,
+		County:        apiApt.County,
+		City:          apiApt.City,
+		OwnershipType: apiApt.OwnershipType,
+		UseType:       apiApt.UseType,
+		Manager:       apiApt.Manager,
+		ManagerPhone:  apiApt.ManagerPhone,
+		Latitude:      apiApt.Latitude,
+		Longitude:     apiApt.Longitude,
+		AirportStatus: apiApt.AirportStatus,
+		Weather:       "", // Filled later
+	}, nil
 }
 
 // fetchWeather: Internal helper for Weather API
@@ -104,7 +143,7 @@ func (s *Service) fetchWeather(city string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("weather API returned status: %s", resp.Status) // Fixed: lowercase "weather"
+		return "", fmt.Errorf("weather API returned status: %s", resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -132,6 +171,7 @@ func (s *Service) SyncAllAirports() (int, error) {
 	updated := 0
 	var errors []string
 	for _, airport := range airports {
+		// Fetch real aviation data (overwrites dummies)
 		realAirport, err := s.fetchAirportFromAviationAPI(airport.Faa)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("%s: aviation fetch failed - %v", airport.Faa, err))
@@ -161,6 +201,9 @@ func (s *Service) SyncAllAirports() (int, error) {
 		}
 		updated++
 		log.Printf("Synced %s: %s, %s", realAirport.Faa, realAirport.FacilityName, realAirport.Weather)
+
+		// Rate limiting delay (adjust as needed)
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	if len(errors) > 0 {
@@ -170,6 +213,7 @@ func (s *Service) SyncAllAirports() (int, error) {
 }
 
 // GetAllAirportsWithWeather fetches all airports from DB and enriches each with current weather.
+// Returns a slice of enriched airports.
 func (s *Service) GetAllAirportsWithWeather() ([]domain.Airport, error) {
 	airports, err := s.repo.GetAllAirports()
 	if err != nil {
