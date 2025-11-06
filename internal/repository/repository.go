@@ -27,7 +27,7 @@ func (r *Repository) Create(airport *domain.Airport) error {
 		ON CONFLICT (faa) DO NOTHING
 	`
 
-	_, err := r.db.Exec(
+	result, err := r.db.Exec(
 		query,
 		airport.SiteNumber, airport.FacilityName, airport.Faa, airport.Icao,
 		airport.StateCode, airport.StateFull, airport.County, airport.City,
@@ -37,6 +37,15 @@ func (r *Repository) Create(airport *domain.Airport) error {
 	if err != nil {
 		return fmt.Errorf("failed to create airport: %w", err)
 	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected for %s: %w", airport.Faa, err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no airport found to update for %s", airport.Faa)
+	}
+
 	return nil
 }
 
