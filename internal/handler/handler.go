@@ -27,8 +27,8 @@ func (h *Handler) Router() *chi.Mux {
 	r.Get("/health", h.healthCheck)
 	r.Get("/airports", h.getAllAirportsWithWeather)
 	r.Get("/airport/{faa}", h.getAirportWithWeather)
-	r.Post("/airport", h.createAirport) // NOT YET
-	r.Put("/airport", h.updateAirport)  // NOT YET
+	r.Post("/airport", h.createAirport)
+	r.Put("/airport", h.updateAirport)
 	r.Post("/sync", h.syncAllAirports)
 	r.Post("/sync/{faa}", h.syncAirportByFAA)
 	r.Delete("/airports/{faa}", h.deleteAirportByFAA)
