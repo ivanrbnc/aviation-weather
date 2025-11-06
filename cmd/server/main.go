@@ -14,18 +14,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Build DSN helper (shared).
-func buildDSN(cfg *config.Config) string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
-}
-
 func main() {
-	// Load config
+	// Load configuration
 	cfg := config.Load()
 
-	// Connect to DB
-	db, err := sql.Open("postgres", buildDSN(cfg))
+	// Connect to PostgreSQL
+	db, err := sql.Open(
+		"postgres",
+		fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
+			cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName,
+		),
+	)
 	if err != nil {
 		log.Fatalf("failed to open DB: %v", err)
 	}
@@ -36,12 +36,12 @@ func main() {
 	}
 	log.Println("Connected to PostgreSQL")
 
-	// Initialize layers
+	// Initialize app layers
 	repo := repository.NewRepository(db)
 	svc := service.NewService(repo, cfg)
 	h := handler.NewHandler(svc)
 
-	// Start server with Chi router
+	// Start HTTP server
 	port := ":" + cfg.AppPort
 	log.Printf("Server starting on port %s", port)
 	log.Fatal(http.ListenAndServe(port, h.Router()))

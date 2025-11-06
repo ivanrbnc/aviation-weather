@@ -3,8 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
+	"aviation-weather/internal/domain"
 	"aviation-weather/internal/service"
 
 	"github.com/go-chi/chi/v5"
@@ -23,11 +25,13 @@ func (h *Handler) Router() *chi.Mux {
 
 	// Routes
 	r.Get("/health", h.healthCheck)
-	r.Get("/airports/{faa}", h.getAirportWithWeather) // YES
-	r.Get("/airports", h.getAllAirportsWithWeather)   // YES
+	r.Get("/airports", h.getAllAirportsWithWeather)
+	r.Get("/airport/{faa}", h.getAirportWithWeather)
+	r.Post("/airport", h.createAirport) // NOT YET
+	r.Put("/airport", h.updateAirport)  // NOT YET
 	r.Post("/sync", h.syncAllAirports)
 	r.Post("/sync/{faa}", h.syncAirportByFAA)
-	r.Delete("/airports/{faa}", h.deleteAirportByFAA) // YES
+	r.Delete("/airports/{faa}", h.deleteAirportByFAA)
 
 	return r
 }
@@ -38,6 +42,42 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "message": "Aviation Weather API is running"})
 }
 
+func (h *Handler) createAirport(w http.ResponseWriter, r *http.Request) {
+	var airport domain.Airport
+	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "invalid JSON: %s"}`, err), http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Creating airport: %+v", airport)
+
+	if err := h.svc.CreateAirport(&airport); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "created", "faa": airport.Faa})
+}
+
+func (h *Handler) updateAirport(w http.ResponseWriter, r *http.Request) {
+	var airport domain.Airport
+	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "invalid JSON: %s"}`, err), http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Updating airport: %+v", airport)
+
+	if err := h.svc.UpdateAirport(&airport); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "updated", "faa": airport.Faa})
+}
+
 // getAirportWithWeather: Fetches and returns enriched airport data.
 func (h *Handler) getAirportWithWeather(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
@@ -46,11 +86,12 @@ func (h *Handler) getAirportWithWeather(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	airport, err := h.svc.GetAirportWithWeather(faa)
+	airport, err := h.svc.GetAirportByFAA(faa)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err), http.StatusInternalServerError)
 		return
 	}
+
 	if airport == nil {
 		http.Error(w, `{"error": "airport not found"}`, http.StatusNotFound)
 		return
@@ -69,7 +110,7 @@ func (h *Handler) getAllAirportsWithWeather(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(airports) // JSON array of airports
+	json.NewEncoder(w).Encode(airports)
 }
 
 // syncAllAirports: Bulk updates all airports with real API data.
@@ -95,19 +136,20 @@ func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	airport, err := h.svc.GetAirportWithWeather(faa)
+	airport, err := h.svc.GetAndSaveAirportWithWeather(faa)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err), http.StatusInternalServerError)
 		return
 	}
+
 	if airport == nil {
 		http.Error(w, `{"error": "no data found for sync"}`, http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "synced",
+	json.NewEncoder(w).Encode(map[string]any{
+		"status":  "ok",
 		"airport": airport,
 	})
 }

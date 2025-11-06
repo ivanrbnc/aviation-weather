@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS airport (
     use_type VARCHAR(50),
     manager VARCHAR(255),
     manager_phone VARCHAR(20),
-    latitude DECIMAL(10,7),
-    longitude DECIMAL(10,7),
+    latitude VARCHAR(50),
+    longitude VARCHAR(50),
     airport_status VARCHAR(50),
     weather VARCHAR(50)
 );

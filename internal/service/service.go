@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"aviation-weather/config"
@@ -23,14 +22,28 @@ type Service struct {
 
 func NewService(repo *repository.Repository, cfg *config.Config) *Service {
 	return &Service{
-		repo:       repo,
-		cfg:        cfg,
-		httpClient: &http.Client{Timeout: 10 * time.Second},
+		repo: repo,
+		cfg:  cfg,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
-// GetAirportWithWeather fetches airport details and persists/updates in DB
-func (s *Service) GetAirportWithWeather(faa string) (*domain.Airport, error) {
+func (s *Service) CreateAirport(a *domain.Airport) error {
+	return s.repo.Create(a)
+}
+
+func (s *Service) UpdateAirport(a *domain.Airport) error {
+	return s.repo.UpdateAirport(a)
+}
+
+func (s *Service) GetAirportByFAA(faa string) (*domain.Airport, error) {
+	return s.repo.GetAirportByFAA(faa)
+}
+
+// GetAndSaveAirportWithWeather fetches airport details and persists/updates in DB
+func (s *Service) GetAndSaveAirportWithWeather(faa string) (*domain.Airport, error) {
 	// Step 1: Fetch from Aviation API
 	airport, err := s.fetchAirportFromAviationAPI(faa)
 	if err != nil {
@@ -41,25 +54,24 @@ func (s *Service) GetAirportWithWeather(faa string) (*domain.Airport, error) {
 	}
 
 	// Step 2: Enrich with weather
-	weatherText, err := s.fetchWeather(airport.City)
+	weatherText, err := s.fetchWeatherFromWeatherAPI(airport.City)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch weather for city %s: %w", airport.City, err)
 	}
 	airport.Weather = weatherText
 
-	// Step 3: Persist via repo (creates if new, skips/ignores if exists—but weather isn't updated here; add UpdateWeather if needed)
-	if err := s.repo.Create(airport); err != nil {
+	// Step 3: Persist via repo
+	if err := s.repo.UpdateAirport(airport); err != nil {
 		return nil, fmt.Errorf("failed to persist airport: %w", err)
 	}
 
 	return airport, nil
 }
 
-// fetchAirportFromAviationAPI: Internal helper for Aviation API call (based on your demo).
+// fetchAirportFromAviationAPI: Internal helper for Aviation API call
 func (s *Service) fetchAirportFromAviationAPI(faa string) (*domain.Airport, error) {
 	apiURL := fmt.Sprintf("https://api.aviationapi.com/v1/airports?apt=%s", url.QueryEscape(faa))
-
-	resp, err := s.httpClient.Get(apiURL)
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		return nil, err
 	}
@@ -79,42 +91,25 @@ func (s *Service) fetchAirportFromAviationAPI(faa string) (*domain.Airport, erro
 		return nil, fmt.Errorf("failed to unmarshal Aviation API response: %w", err)
 	}
 
-	airportList, ok := airports[faa]
-	if !ok || len(airportList) == 0 {
-		return nil, nil // Not found
+	var airport domain.Airport
+	if len(airports[faa]) > 0 {
+		airport = airports[faa][0]
 	}
 
-	// Take first since FAA is unique; parse lat/long to float64
-	apiApt := airportList[0]
-
-	return &domain.Airport{
-		SiteNumber:    apiApt.SiteNumber,
-		FacilityName:  apiApt.FacilityName,
-		Faa:           apiApt.Faa,
-		Icao:          apiApt.Icao,
-		StateCode:     apiApt.StateCode,
-		StateFull:     apiApt.StateFull,
-		County:        apiApt.County,
-		City:          apiApt.City,
-		OwnershipType: apiApt.OwnershipType,
-		UseType:       apiApt.UseType,
-		Manager:       apiApt.Manager,
-		ManagerPhone:  apiApt.ManagerPhone,
-		Latitude:      apiApt.Latitude,
-		Longitude:     apiApt.Longitude,
-		AirportStatus: apiApt.AirportStatus,
-		Weather:       "", // Filled later
-	}, nil
+	return &airport, nil
 }
 
-// fetchWeather: Internal helper for Weather API
-func (s *Service) fetchWeather(city string) (string, error) {
+// fetchWeatherFromWeatherAPI: Internal helper for Weather API
+func (s *Service) fetchWeatherFromWeatherAPI(city string) (string, error) {
 	if s.cfg.WeatherAPIKey == "" {
 		return "Weather API key not configured", fmt.Errorf("missing WEATHER_API_KEY")
 	}
 
-	apiURL := fmt.Sprintf("https://api.weatherapi.com/v1/current.json?key=%s&q=%s",
-		url.QueryEscape(s.cfg.WeatherAPIKey), url.QueryEscape(city))
+	apiURL := fmt.Sprintf(
+		"https://api.weatherapi.com/v1/current.json?key=%s&q=%s",
+		url.QueryEscape(s.cfg.WeatherAPIKey),
+		url.QueryEscape(city),
+	)
 
 	resp, err := s.httpClient.Get(apiURL)
 	if err != nil {
@@ -144,89 +139,52 @@ func (s *Service) SyncAllAirports() (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to get all airports: %w", err)
 	}
+
 	if len(airports) == 0 {
 		return 0, fmt.Errorf("no airports to sync")
 	}
 
 	updated := 0
 	var errors []string
+
 	for _, airport := range airports {
-		// Fetch real aviation data (overwrites dummies)
-		realAirport, err := s.fetchAirportFromAviationAPI(airport.Faa)
+		airport, err := s.GetAndSaveAirportWithWeather(airport.Faa)
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("%s: aviation fetch failed - %v", airport.Faa, err))
+			log.Println(err)
 			continue
 		}
-		if realAirport == nil {
-			errors = append(errors, fmt.Sprintf("%s: no aviation data found", airport.Faa))
-			continue
-		}
-
-		// Use real data (keep faa as key)
-		realAirport.Weather = airport.Weather // Temp; will overwrite below
-
-		// Enrich with weather
-		weatherText, err := s.fetchWeather(realAirport.City)
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("%s: weather fetch failed - %v", realAirport.Faa, err))
-			realAirport.Weather = "" // Or skip update; here we set empty
-		} else {
-			realAirport.Weather = weatherText
-		}
-
-		// Update in DB
-		if err := s.repo.UpdateAirport(realAirport); err != nil {
-			errors = append(errors, fmt.Sprintf("%s: update failed - %v", realAirport.Faa, err))
+		if airport == nil {
+			log.Println("Error: Airport not found")
 			continue
 		}
 		updated++
-		log.Printf("Synced %s: %s, %s", realAirport.Faa, realAirport.FacilityName, realAirport.Weather)
+		log.Printf("Synced %s: %s, %s", airport.Faa, airport.FacilityName, airport.Weather)
 
-		// Rate limiting delay (adjust as needed)
 		time.Sleep(200 * time.Millisecond)
 	}
 
 	if len(errors) > 0 {
-		return updated, fmt.Errorf("synced %d/%d; errors: %s", updated, len(airports), strings.Join(errors, "; "))
+		return updated, fmt.Errorf("synced %d/%d", updated, len(airports))
 	}
+
 	return updated, nil
 }
 
-// GetAllAirportsWithWeather fetches all airports from DB and enriches each with current weather.
-// Returns a slice of enriched airports.
+// GetAllAirportsWithWeather fetches all airports from DB and enriches each with current weather
 func (s *Service) GetAllAirportsWithWeather() ([]domain.Airport, error) {
 	airports, err := s.repo.GetAllAirports()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all airports: %w", err)
 	}
+
 	if len(airports) == 0 {
-		return []domain.Airport{}, nil // Empty list, no error
+		return []domain.Airport{}, nil
 	}
 
-	enriched := make([]domain.Airport, len(airports))
-	for i, airport := range airports {
-		// Skip weather fetch if city is empty (avoids 400 Bad Request)
-		var weatherText string
-		if airport.City != "" {
-			weatherText, err = s.fetchWeather(airport.City)
-			if err != nil {
-				log.Printf("warning: failed to fetch weather for %s (%s): %v", airport.Faa, airport.City, err)
-				weatherText = "Weather unavailable"
-			}
-		} else {
-			log.Printf("skipping weather for %s: empty city", airport.Faa)
-			weatherText = "City not available"
-		}
-
-		enrichedAirport := airport
-		enrichedAirport.Weather = weatherText
-		enriched[i] = enrichedAirport
-	}
-
-	return enriched, nil
+	return airports, nil
 }
 
-// DeleteAirportByFAA deletes an airport by FAA code.
+// DeleteAirportByFAA deletes an airport by FAA code
 func (s *Service) DeleteAirportByFAA(faa string) error {
 	return s.repo.DeleteByFAA(faa)
 }
