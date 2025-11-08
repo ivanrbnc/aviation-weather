@@ -49,6 +49,59 @@ func (r *Repository) Create(airport *domain.Airport) error {
 	return nil
 }
 
+// UpdateAirport updates an existing airport by FAA code.
+func (r *Repository) UpdateAirport(airport *domain.Airport) error {
+	query := `
+		UPDATE airport
+		SET site_number = $2, facility_name = $3, icao = $4, state_code = $5, state_full = $6,
+		    county = $7, city = $8, ownership_type = $9, use_type = $10, manager = $11,
+		    manager_phone = $12, latitude = $13, longitude = $14,
+		    airport_status = $15, weather = $16
+		WHERE faa = $1
+	`
+
+	result, err := r.db.Exec(
+		query,
+		airport.Faa, airport.SiteNumber, airport.FacilityName, airport.Icao,
+		airport.StateCode, airport.StateFull, airport.County, airport.City,
+		airport.OwnershipType, airport.UseType, airport.Manager, airport.ManagerPhone,
+		airport.Latitude, airport.Longitude, airport.AirportStatus, airport.Weather,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update airport %s: %w", airport.Faa, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected for %s: %w", airport.Faa, err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no airport found to update for %s", airport.Faa)
+	}
+
+	return nil
+}
+
+// DeleteByFAA deletes an airport by its FAA identifier.
+func (r *Repository) DeleteByFAA(faa string) error {
+	query := `DELETE FROM airport WHERE faa = $1`
+
+	result, err := r.db.Exec(query, faa)
+	if err != nil {
+		return fmt.Errorf("failed to delete airport %s: %w", faa, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected for %s: %w", faa, err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no airport found for %s", faa)
+	}
+
+	return nil
+}
+
 // GetAllAirports fetches all airports from the DB.
 func (r *Repository) GetAllAirports() ([]domain.Airport, error) {
 	query := `
@@ -160,57 +213,4 @@ func (r *Repository) GetAirportByFAA(faaFilter string) (*domain.Airport, error) 
 	}
 
 	return &a, nil
-}
-
-// UpdateAirport updates an existing airport by FAA code.
-func (r *Repository) UpdateAirport(airport *domain.Airport) error {
-	query := `
-		UPDATE airport
-		SET site_number = $2, facility_name = $3, icao = $4, state_code = $5, state_full = $6,
-		    county = $7, city = $8, ownership_type = $9, use_type = $10, manager = $11,
-		    manager_phone = $12, latitude = $13, longitude = $14,
-		    airport_status = $15, weather = $16
-		WHERE faa = $1
-	`
-
-	result, err := r.db.Exec(
-		query,
-		airport.Faa, airport.SiteNumber, airport.FacilityName, airport.Icao,
-		airport.StateCode, airport.StateFull, airport.County, airport.City,
-		airport.OwnershipType, airport.UseType, airport.Manager, airport.ManagerPhone,
-		airport.Latitude, airport.Longitude, airport.AirportStatus, airport.Weather,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to update airport %s: %w", airport.Faa, err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected for %s: %w", airport.Faa, err)
-	}
-	if rowsAffected == 0 {
-		return fmt.Errorf("no airport found to update for %s", airport.Faa)
-	}
-
-	return nil
-}
-
-// DeleteByFAA deletes an airport by its FAA identifier.
-func (r *Repository) DeleteByFAA(faa string) error {
-	query := `DELETE FROM airport WHERE faa = $1`
-
-	result, err := r.db.Exec(query, faa)
-	if err != nil {
-		return fmt.Errorf("failed to delete airport %s: %w", faa, err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected for %s: %w", faa, err)
-	}
-	if rowsAffected == 0 {
-		return fmt.Errorf("no airport found for %s", faa)
-	}
-
-	return nil
 }

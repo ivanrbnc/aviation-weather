@@ -19,11 +19,16 @@ type Airport struct {
 	Weather       string `json:"weather"`
 }
 
-// WeatherResponse represents the structure of data returned by the weather API.
 type WeatherResponse struct {
 	Current struct {
 		Condition struct {
 			Text string `json:"text"`
 		} `json:"condition"`
 	} `json:"current"`
+}
+
+type ApiResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
