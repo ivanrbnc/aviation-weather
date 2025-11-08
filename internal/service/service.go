@@ -133,7 +133,7 @@ func (s *Service) FetchWeatherFromWeatherAPI(city string) (string, error) {
 }
 
 func (s *Service) SyncAirportByFAA(faa string) (*domain.Airport, error) {
-	// Step 1: Fetch from Aviation API
+	// Fetch from Aviation API
 	airport, err := s.FetchAirportFromAviationAPI(faa)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch airport for %s: %w", faa, err)
@@ -143,14 +143,14 @@ func (s *Service) SyncAirportByFAA(faa string) (*domain.Airport, error) {
 		return nil, fmt.Errorf("no airport found for %s", faa)
 	}
 
-	// Step 2: Enrich with weather
+	// Fetch from Weather API
 	weatherText, err := s.FetchWeatherFromWeatherAPI(airport.City)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch weather for %s: %w", airport.City, err)
 	}
 	airport.Weather = weatherText
 
-	// Step 3: Save to db
+	// Save to DB
 	if err := s.repo.UpdateAirport(airport); err != nil {
 		return nil, fmt.Errorf("failed to update airport %s: %w", faa, err)
 	}

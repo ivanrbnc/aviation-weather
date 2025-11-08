@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"aviation-weather/internal/domain"
@@ -38,19 +39,20 @@ func (h *Handler) Router() *chi.Mux {
 
 // healthCheck: Simple health endpoint.
 func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
-	utils.EncodeResponseToUser(w, "OK", "Aviation Weather API is Running", "No data passed")
+	utils.EncodeResponseToUser(w, "OK", "Aviation Weather API is Running", nil)
 }
 
 func (h *Handler) createAirport(w http.ResponseWriter, r *http.Request) {
 	var airport domain.Airport
 	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
-		utils.EncodeResponseToUser(w, "Bad Request", "Invalid JSON", "No data passed")
+		log.Printf("createAirport: invalid JSON: %v", err)
+		utils.EncodeResponseToUser(w, "Bad Request", "Invalid JSON", nil, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.svc.CreateAirport(&airport); err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", "No data passed")
+		log.Printf("createAirport: service error: %v", err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
@@ -60,13 +62,14 @@ func (h *Handler) createAirport(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) updateAirport(w http.ResponseWriter, r *http.Request) {
 	var airport domain.Airport
 	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
-		utils.EncodeResponseToUser(w, "Bad Request", "Invalid JSON", "No data passed")
+		log.Printf("updateAirport: invalid JSON: %v", err)
+		utils.EncodeResponseToUser(w, "Bad Request", "Invalid JSON", nil, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.svc.UpdateAirport(&airport); err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", "No data passed")
+		log.Printf("updateAirport: service error: %v", err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
@@ -76,14 +79,14 @@ func (h *Handler) updateAirport(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) deleteAirportByFAA(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
 	if faa == "" {
-		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", "No data passed")
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
 		return
 	}
 
 	err := h.svc.DeleteAirportByFAA(faa)
 	if err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", "No data passed")
+		log.Printf("deleteAirportByFAA: error for %s: %v", faa, err)
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
 		return
 	}
 
@@ -93,19 +96,19 @@ func (h *Handler) deleteAirportByFAA(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getAirport(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
 	if faa == "" {
-		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", "No data passed")
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
 		return
 	}
 
 	airport, err := h.svc.GetAirportByFAA(faa)
 	if err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", "No data passed")
+		log.Printf("getAirport: service error for %s: %v", faa, err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
 	if airport == nil {
-		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", "No data passed")
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
 		return
 	}
 
@@ -115,8 +118,8 @@ func (h *Handler) getAirport(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getAllAirports(w http.ResponseWriter, r *http.Request) {
 	airports, err := h.svc.GetAllAirports()
 	if err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", "No data passed")
+		log.Printf("getAllAirports: service error: %v", err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
@@ -127,19 +130,19 @@ func (h *Handler) getAllAirports(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
 	if faa == "" {
-		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", "No data passed")
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
 		return
 	}
 
 	airport, err := h.svc.SyncAirportByFAA(faa)
 	if err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", "No data passed")
+		log.Printf("syncAirportByFAA: service error for %s: %v", faa, err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
 	if airport == nil {
-		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", "No data passed")
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
 		return
 	}
 
@@ -150,10 +153,10 @@ func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) syncAllAirports(w http.ResponseWriter, r *http.Request) {
 	updated, err := h.svc.SyncAllAirports()
 	if err != nil {
-		fmt.Print(err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", "No data passed")
+		log.Printf("syncAllAirports: service error: %v", err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
-	utils.EncodeResponseToUser(w, "OK", fmt.Sprintf("%d Airports are Synced", updated), "None")
+	utils.EncodeResponseToUser(w, "OK", fmt.Sprintf("%d Airports are Synced", updated), nil)
 }
