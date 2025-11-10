@@ -41,7 +41,7 @@ func TestHealthCheck(t *testing.T) {
 	req := httptest.NewRequest("GET", "/health", nil) // Fake request
 	rec := httptest.NewRecorder()                     // Fake response writer, no connection to web server
 
-	r.ServeHTTP(rec, req) // Simulation HTTP Request in memory, no connection once again
+	r.ServeHTTP(rec, req) // Simulation HTTP Request in memory. Run the handler as if a real client made this HTTP request, and store the result in rec
 
 	assert.Equal(t, http.StatusOK, rec.Code, "HTTP status code should be 200")
 	assert.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Header should be JSON")
