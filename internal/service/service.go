@@ -18,6 +18,10 @@ type Service struct {
 	repo       repository.RepositoryInterface
 	cfg        *config.Config
 	httpClient *http.Client
+
+	// Internal helper so that it can be overriden
+	FetchAirportFromAviationAPI func(faa string) (*domain.Airport, error)
+	FetchWeatherFromWeatherAPI  func(city string) (string, error)
 }
 
 type ServiceInterface interface {
@@ -31,13 +35,16 @@ type ServiceInterface interface {
 }
 
 func NewService(repo repository.RepositoryInterface, cfg *config.Config) ServiceInterface {
-	return &Service{
+	s := &Service{
 		repo: repo,
 		cfg:  cfg,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
 	}
+	s.FetchAirportFromAviationAPI = s.fetchAirportFromAviationAPI
+	s.FetchWeatherFromWeatherAPI = s.fetchWeatherFromWeatherAPI
+	return s
 }
 
 func (s *Service) CreateAirport(a *domain.Airport) error {
@@ -76,70 +83,6 @@ func (s *Service) GetAllAirports() ([]domain.Airport, error) {
 	}
 
 	return airports, nil
-}
-
-func (s *Service) FetchAirportFromAviationAPI(faa string) (*domain.Airport, error) {
-	apiURL := fmt.Sprintf("https://api.aviationapi.com/v1/airports?apt=%s", url.QueryEscape(faa))
-	resp, err := s.httpClient.Get(apiURL)
-	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed for %s: %w", faa, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned %s for %s", resp.Status, faa)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response for %s: %w", faa, err)
-	}
-
-	var airports map[string][]domain.Airport
-	if err := json.Unmarshal(body, &airports); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response for %s: %w", faa, err)
-	}
-
-	var airport domain.Airport
-	if len(airports[faa]) > 0 {
-		airport = airports[faa][0]
-	}
-
-	return &airport, nil
-}
-
-func (s *Service) FetchWeatherFromWeatherAPI(city string) (string, error) {
-	if s.cfg.WeatherAPIKey == "" {
-		return "Weather API key not configured", fmt.Errorf("missing WEATHER_API_KEY")
-	}
-
-	apiURL := fmt.Sprintf(
-		"https://api.weatherapi.com/v1/current.json?key=%s&q=%s",
-		url.QueryEscape(s.cfg.WeatherAPIKey),
-		url.QueryEscape(city),
-	)
-
-	resp, err := s.httpClient.Get(apiURL)
-	if err != nil {
-		return "", fmt.Errorf("HTTP request failed for %s: %w", city, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API returned %s for %s", resp.Status, city)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response for %s: %w", city, err)
-	}
-
-	var weather domain.WeatherResponse
-	if err := json.Unmarshal(body, &weather); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response for %s: %w", city, err)
-	}
-
-	return weather.Current.Condition.Text, nil
 }
 
 func (s *Service) SyncAirportByFAA(faa string) (*domain.Airport, error) {
@@ -213,4 +156,70 @@ func (s *Service) SyncAllAirports() (int, error) {
 	}
 
 	return updated, nil
+}
+
+// Internal helper
+func (s *Service) fetchAirportFromAviationAPI(faa string) (*domain.Airport, error) {
+	apiURL := fmt.Sprintf("https://api.aviationapi.com/v1/airports?apt=%s", url.QueryEscape(faa))
+	resp, err := s.httpClient.Get(apiURL)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed for %s: %w", faa, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned %s for %s", resp.Status, faa)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response for %s: %w", faa, err)
+	}
+
+	var airports map[string][]domain.Airport
+	if err := json.Unmarshal(body, &airports); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response for %s: %w", faa, err)
+	}
+
+	var airport domain.Airport
+	if len(airports[faa]) > 0 {
+		airport = airports[faa][0]
+	}
+
+	return &airport, nil
+}
+
+// Internal helper
+func (s *Service) fetchWeatherFromWeatherAPI(city string) (string, error) {
+	if s.cfg.WeatherAPIKey == "" {
+		return "Weather API key not configured", fmt.Errorf("missing WEATHER_API_KEY")
+	}
+
+	apiURL := fmt.Sprintf(
+		"https://api.weatherapi.com/v1/current.json?key=%s&q=%s",
+		url.QueryEscape(s.cfg.WeatherAPIKey),
+		url.QueryEscape(city),
+	)
+
+	resp, err := s.httpClient.Get(apiURL)
+	if err != nil {
+		return "", fmt.Errorf("HTTP request failed for %s: %w", city, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API returned %s for %s", resp.Status, city)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response for %s: %w", city, err)
+	}
+
+	var weather domain.WeatherResponse
+	if err := json.Unmarshal(body, &weather); err != nil {
+		return "", fmt.Errorf("failed to unmarshal response for %s: %w", city, err)
+	}
+
+	return weather.Current.Condition.Text, nil
 }
