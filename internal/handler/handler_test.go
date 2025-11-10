@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"aviation-weather/internal/domain"
-	mocks "aviation-weather/internal/mock"
+	mocks "aviation-weather/internal/mock" // No conflict with testify
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
