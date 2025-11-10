@@ -203,7 +203,7 @@ func TestCreateAirport(t *testing.T) {
 				})).Return(assert.AnError)
 			},
 			expectedCode: http.StatusInternalServerError,
-			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
+			expectedJSON: `{"status":"Error","message":"Duplicate Airport","data":null}`,
 		},
 	}
 
@@ -264,7 +264,7 @@ func TestUpdateAirport(t *testing.T) {
 					return a.Faa == "TST"
 				})).Return(assert.AnError)
 			},
-			expectedCode: http.StatusInternalServerError,
+			expectedCode: http.StatusNotFound,
 			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
 		},
 	}

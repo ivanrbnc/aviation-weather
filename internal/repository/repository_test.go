@@ -81,12 +81,13 @@ func TestCreateAirport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Fake DB connection and a mock controller
 			db, mock, err := sqlmock.New()
 			assert.NoError(t, err)
 			defer db.Close()
 
 			r := NewRepository(db)
-			tt.setupDB(mock)
+			tt.setupDB(mock) // Mock query
 
 			err = r.CreateAirport(&sampleAirport)
 			if tt.expectedErr == "" {

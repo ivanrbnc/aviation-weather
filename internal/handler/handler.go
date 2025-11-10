@@ -61,7 +61,7 @@ func (h *Handler) createAirport(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.svc.CreateAirport(&airport); err != nil {
 		log.Printf("createAirport: service error: %v", err)
-		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusInternalServerError)
+		utils.EncodeResponseToUser(w, "Error", "Duplicate Airport", nil, http.StatusInternalServerError)
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *Handler) updateAirport(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.svc.UpdateAirport(&airport); err != nil {
 		log.Printf("updateAirport: service error: %v", err)
-		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusInternalServerError)
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
 		return
 	}
 
