@@ -61,18 +61,18 @@ func TestEncodeResponseToUser(t *testing.T) {
 		// Sub test
 		t.Run(tt.name, func(t *testing.T) {
 			// Fake response writer, no connection to web server
-			fakeWriter := httptest.NewRecorder()
+			rec := httptest.NewRecorder()
 
 			if tt.expectedCode == http.StatusOK {
-				EncodeResponseToUser(fakeWriter, tt.status, tt.message, tt.data)
+				EncodeResponseToUser(rec, tt.status, tt.message, tt.data)
 			} else {
-				EncodeResponseToUser(fakeWriter, tt.status, tt.message, tt.data, tt.expectedCode)
+				EncodeResponseToUser(rec, tt.status, tt.message, tt.data, tt.expectedCode)
 			}
 
 			// Checking the status code, header, and body
-			assert.Equal(t, tt.expectedCode, fakeWriter.Code, "HTTP status code should match")
-			assert.Equal(t, "application/json", fakeWriter.Header().Get("Content-Type"), "Header should be JSON")
-			assert.JSONEq(t, tt.expectedJSON, fakeWriter.Body.String(), "JSON body should match")
+			assert.Equal(t, tt.expectedCode, rec.Code, "HTTP status code should match")
+			assert.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Header should be JSON")
+			assert.JSONEq(t, tt.expectedJSON, rec.Body.String(), "JSON body should match")
 		})
 	}
 }

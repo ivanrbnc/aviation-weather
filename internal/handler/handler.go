@@ -27,11 +27,20 @@ func (h *Handler) Router() *chi.Mux {
 	// Routes
 	r.Get("/health", h.healthCheck)
 	r.Get("/airports", h.getAllAirports)
+	r.Get("/airport/", func(w http.ResponseWriter, r *http.Request) {
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
+	})
 	r.Get("/airport/{faa}", h.getAirport)
 	r.Post("/airport", h.createAirport)
 	r.Put("/airport", h.updateAirport)
 	r.Post("/sync", h.syncAllAirports)
+	r.Post("/sync/", func(w http.ResponseWriter, r *http.Request) {
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
+	})
 	r.Post("/sync/{faa}", h.syncAirportByFAA)
+	r.Delete("/airports/", func(w http.ResponseWriter, r *http.Request) {
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
+	})
 	r.Delete("/airports/{faa}", h.deleteAirportByFAA)
 
 	return r
@@ -78,10 +87,6 @@ func (h *Handler) updateAirport(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) deleteAirportByFAA(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
-	if faa == "" {
-		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
-		return
-	}
 
 	err := h.svc.DeleteAirportByFAA(faa)
 	if err != nil {
@@ -95,10 +100,6 @@ func (h *Handler) deleteAirportByFAA(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) getAirport(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
-	if faa == "" {
-		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
-		return
-	}
 
 	airport, err := h.svc.GetAirportByFAA(faa)
 	if err != nil {
@@ -129,10 +130,6 @@ func (h *Handler) getAllAirports(w http.ResponseWriter, r *http.Request) {
 // syncAirportByFAA: Syncs a single airport by FAA (fetches APIs, updates DB).
 func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
-	if faa == "" {
-		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
-		return
-	}
 
 	airport, err := h.svc.SyncAirportByFAA(faa)
 	if err != nil {
