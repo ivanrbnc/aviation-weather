@@ -7,50 +7,13 @@ import (
 	"testing"
 
 	"aviation-weather/internal/domain"
+	mocks "aviation-weather/internal/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 // Fake service that won't call any API or functionalities
-type MockService struct {
-	mock.Mock
-}
-
-func (m *MockService) CreateAirport(a *domain.Airport) error {
-	args := m.Called(a)
-	return args.Error(0)
-}
-
-func (m *MockService) UpdateAirport(a *domain.Airport) error {
-	args := m.Called(a)
-	return args.Error(0)
-}
-
-func (m *MockService) DeleteAirportByFAA(faa string) error {
-	args := m.Called(faa)
-	return args.Error(0)
-}
-
-func (m *MockService) GetAirportByFAA(faa string) (*domain.Airport, error) {
-	args := m.Called(faa)
-	return args.Get(0).(*domain.Airport), args.Error(1)
-}
-
-func (m *MockService) GetAllAirports() ([]domain.Airport, error) {
-	args := m.Called()
-	return args.Get(0).([]domain.Airport), args.Error(1)
-}
-
-func (m *MockService) SyncAirportByFAA(faa string) (*domain.Airport, error) {
-	args := m.Called(faa)
-	return args.Get(0).(*domain.Airport), args.Error(1)
-}
-
-func (m *MockService) SyncAllAirports() (int, error) {
-	args := m.Called()
-	return args.Int(0), args.Error(1)
-}
 
 var sampleAirport = domain.Airport{
 	SiteNumber:    "12345",
@@ -74,7 +37,7 @@ var sampleAirport = domain.Airport{
 var sampleAirportJSON = `{"site_number":"12345","facility_name":"Test Airport","faa_ident":"TST","icao_ident":"KTST","state":"CA","state_full":"California","county":"Test County","city":"Test City","ownership":"Public","use":"Public Use","manager":"Test Manager","manager_phone":"123-456-7890","latitude":"34.0522","longitude":"-118.2437","status":"Open","weather":"Clear"}`
 
 func TestHealthCheck(t *testing.T) {
-	h := NewHandler(&MockService{})
+	h := NewHandler(&mocks.ServiceMock{})
 	r := h.Router()
 
 	req := httptest.NewRequest("GET", "/health", nil) // Fake request
@@ -90,7 +53,7 @@ func TestHealthCheck(t *testing.T) {
 func TestGetAllAirports(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupMock      func(*MockService)
+		setupMock      func(*mocks.ServiceMock)
 		expectedCode   int
 		expectedJSON   string
 		expectedStatus string
@@ -98,7 +61,7 @@ func TestGetAllAirports(t *testing.T) {
 	}{
 		{
 			name: "success",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("GetAllAirports").Return([]domain.Airport{sampleAirport}, nil)
 			},
 			expectedCode:   http.StatusOK,
@@ -108,7 +71,7 @@ func TestGetAllAirports(t *testing.T) {
 		},
 		{
 			name: "service error",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("GetAllAirports").Return([]domain.Airport{}, assert.AnError)
 			},
 			expectedCode:   http.StatusInternalServerError,
@@ -120,7 +83,7 @@ func TestGetAllAirports(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
@@ -142,14 +105,14 @@ func TestGetAirport(t *testing.T) {
 	tests := []struct {
 		name         string
 		faa          string
-		setupMock    func(*MockService)
+		setupMock    func(*mocks.ServiceMock)
 		expectedCode int
 		expectedJSON string
 	}{
 		{
 			name: "success",
 			faa:  "TST",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("GetAirportByFAA", "TST").Return(&sampleAirport, nil)
 			},
 			expectedCode: http.StatusOK,
@@ -158,7 +121,7 @@ func TestGetAirport(t *testing.T) {
 		{
 			name: "missing faa",
 			faa:  "",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				// No call expected
 			},
 			expectedCode: http.StatusBadRequest,
@@ -167,7 +130,7 @@ func TestGetAirport(t *testing.T) {
 		{
 			name: "not found",
 			faa:  "NF",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("GetAirportByFAA", "NF").Return((*domain.Airport)(nil), nil)
 			},
 			expectedCode: http.StatusNotFound,
@@ -176,7 +139,7 @@ func TestGetAirport(t *testing.T) {
 		{
 			name: "service error",
 			faa:  "ERR",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("GetAirportByFAA", "ERR").Return((*domain.Airport)(nil), assert.AnError)
 			},
 			expectedCode: http.StatusInternalServerError,
@@ -186,7 +149,7 @@ func TestGetAirport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
@@ -209,14 +172,14 @@ func TestCreateAirport(t *testing.T) {
 	tests := []struct {
 		name         string
 		body         []byte
-		setupMock    func(*MockService)
+		setupMock    func(*mocks.ServiceMock)
 		expectedCode int
 		expectedJSON string
 	}{
 		{
 			name: "success",
 			body: []byte(sampleAirportJSON),
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("CreateAirport", mock.MatchedBy(func(a *domain.Airport) bool {
 					return a.Faa == "TST"
 				})).Return(nil)
@@ -227,7 +190,7 @@ func TestCreateAirport(t *testing.T) {
 		{
 			name: "invalid json",
 			body: []byte(`{invalid}`),
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				// No call expected
 			},
 			expectedCode: http.StatusBadRequest,
@@ -236,7 +199,7 @@ func TestCreateAirport(t *testing.T) {
 		{
 			name: "service error",
 			body: []byte(sampleAirportJSON),
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("CreateAirport", mock.MatchedBy(func(a *domain.Airport) bool {
 					return a.Faa == "TST"
 				})).Return(assert.AnError)
@@ -248,7 +211,7 @@ func TestCreateAirport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
@@ -271,14 +234,14 @@ func TestUpdateAirport(t *testing.T) {
 	tests := []struct {
 		name         string
 		body         []byte
-		setupMock    func(*MockService)
+		setupMock    func(*mocks.ServiceMock)
 		expectedCode int
 		expectedJSON string
 	}{
 		{
 			name: "success",
 			body: []byte(sampleAirportJSON),
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("UpdateAirport", mock.MatchedBy(func(a *domain.Airport) bool {
 					return a.Faa == "TST"
 				})).Return(nil)
@@ -289,7 +252,7 @@ func TestUpdateAirport(t *testing.T) {
 		{
 			name: "invalid json",
 			body: []byte(`{invalid}`),
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				// No call expected
 			},
 			expectedCode: http.StatusBadRequest,
@@ -298,7 +261,7 @@ func TestUpdateAirport(t *testing.T) {
 		{
 			name: "service error",
 			body: []byte(sampleAirportJSON),
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("UpdateAirport", mock.MatchedBy(func(a *domain.Airport) bool {
 					return a.Faa == "TST"
 				})).Return(assert.AnError)
@@ -310,7 +273,7 @@ func TestUpdateAirport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
@@ -333,14 +296,14 @@ func TestDeleteAirportByFAA(t *testing.T) {
 	tests := []struct {
 		name         string
 		faa          string
-		setupMock    func(*MockService)
+		setupMock    func(*mocks.ServiceMock)
 		expectedCode int
 		expectedJSON string
 	}{
 		{
 			name: "success",
 			faa:  "TST",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("DeleteAirportByFAA", "TST").Return(nil)
 			},
 			expectedCode: http.StatusOK,
@@ -349,7 +312,7 @@ func TestDeleteAirportByFAA(t *testing.T) {
 		{
 			name: "missing faa",
 			faa:  "",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				// No call expected
 			},
 			expectedCode: http.StatusBadRequest,
@@ -358,7 +321,7 @@ func TestDeleteAirportByFAA(t *testing.T) {
 		{
 			name: "service error",
 			faa:  "ERR",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("DeleteAirportByFAA", "ERR").Return(assert.AnError)
 			},
 			expectedCode: http.StatusNotFound,
@@ -368,7 +331,7 @@ func TestDeleteAirportByFAA(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
@@ -391,14 +354,14 @@ func TestSyncAirportByFAA(t *testing.T) {
 	tests := []struct {
 		name         string
 		faa          string
-		setupMock    func(*MockService)
+		setupMock    func(*mocks.ServiceMock)
 		expectedCode int
 		expectedJSON string
 	}{
 		{
 			name: "success",
 			faa:  "TST",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("SyncAirportByFAA", "TST").Return(&sampleAirport, nil)
 			},
 			expectedCode: http.StatusOK,
@@ -407,7 +370,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 		{
 			name: "missing faa",
 			faa:  "",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				// No call expected
 			},
 			expectedCode: http.StatusBadRequest,
@@ -416,7 +379,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 		{
 			name: "not found",
 			faa:  "NF",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("SyncAirportByFAA", "NF").Return((*domain.Airport)(nil), nil)
 			},
 			expectedCode: http.StatusNotFound,
@@ -425,7 +388,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 		{
 			name: "service error",
 			faa:  "ERR",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("SyncAirportByFAA", "ERR").Return((*domain.Airport)(nil), assert.AnError)
 			},
 			expectedCode: http.StatusInternalServerError,
@@ -435,7 +398,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
@@ -457,13 +420,13 @@ func TestSyncAirportByFAA(t *testing.T) {
 func TestSyncAllAirports(t *testing.T) {
 	tests := []struct {
 		name         string
-		setupMock    func(*MockService)
+		setupMock    func(*mocks.ServiceMock)
 		expectedCode int
 		expectedJSON string
 	}{
 		{
 			name: "success",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("SyncAllAirports").Return(1, nil)
 			},
 			expectedCode: http.StatusOK,
@@ -471,7 +434,7 @@ func TestSyncAllAirports(t *testing.T) {
 		},
 		{
 			name: "service error",
-			setupMock: func(m *MockService) {
+			setupMock: func(m *mocks.ServiceMock) {
 				m.On("SyncAllAirports").Return(0, assert.AnError)
 			},
 			expectedCode: http.StatusInternalServerError,
@@ -481,7 +444,7 @@ func TestSyncAllAirports(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &MockService{}
+			mockSvc := &mocks.ServiceMock{}
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()
