@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Fake service that won't call any API or functionalities
-
 var sampleAirport = domain.Airport{
 	SiteNumber:    "12345",
 	FacilityName:  "Test Airport",
@@ -43,7 +41,7 @@ func TestHealthCheck(t *testing.T) {
 	req := httptest.NewRequest("GET", "/health", nil) // Fake request
 	rec := httptest.NewRecorder()                     // Fake response writer, no connection to web server
 
-	r.ServeHTTP(rec, req)
+	r.ServeHTTP(rec, req) // Simulation HTTP Request, no connection once again
 
 	assert.Equal(t, http.StatusOK, rec.Code, "HTTP status code should be 200")
 	assert.Equal(t, "application/json", rec.Header().Get("Content-Type"), "Header should be JSON")
@@ -83,7 +81,7 @@ func TestGetAllAirports(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSvc := &mocks.ServiceMock{}
+			mockSvc := &mocks.ServiceMock{} // Use the service mock to fake the return
 			tt.setupMock(mockSvc)
 			h := NewHandler(mockSvc)
 			r := h.Router()

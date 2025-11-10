@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// Fake repository that won't call any API or functionalities
 type RepositoryMock struct {
 	mock.Mock
 }

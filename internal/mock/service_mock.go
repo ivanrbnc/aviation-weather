@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// Fake service that won't call any API or functionalities
 type ServiceMock struct {
 	mock.Mock
 }

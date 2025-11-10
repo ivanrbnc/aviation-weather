@@ -56,7 +56,7 @@ func TestCreateAirport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := &mocks.RepositoryMock{}
+			mockRepo := &mocks.RepositoryMock{} // Use the repo mock to fake the return
 			tt.setupMock(mockRepo)
 			s := NewService(mockRepo, &config.Config{})
 
