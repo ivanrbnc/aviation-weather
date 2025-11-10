@@ -11,12 +11,20 @@ type Repository struct {
 	db *sql.DB
 }
 
-func NewRepository(db *sql.DB) *Repository {
+type RepositoryInterface interface {
+	CreateAirport(airport *domain.Airport) error
+	UpdateAirport(airport *domain.Airport) error
+	DeleteByFAA(faa string) error
+	GetAllAirports() ([]domain.Airport, error)
+	GetAirportByFAA(faaFilter string) (*domain.Airport, error)
+}
+
+func NewRepository(db *sql.DB) RepositoryInterface {
 	return &Repository{db: db}
 }
 
 // Create inserts a new airport record if it does not already exist.
-func (r *Repository) Create(airport *domain.Airport) error {
+func (r *Repository) CreateAirport(airport *domain.Airport) error {
 	query := `
 		INSERT INTO airport (
 			site_number, facility_name, faa, icao, state_code, state_full, county,
@@ -43,7 +51,7 @@ func (r *Repository) Create(airport *domain.Airport) error {
 		return fmt.Errorf("failed to check rows affected for %s: %w", airport.Faa, err)
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("no airport found to update for %s", airport.Faa)
+		return fmt.Errorf("no airport found to create for %s", airport.Faa)
 	}
 
 	return nil

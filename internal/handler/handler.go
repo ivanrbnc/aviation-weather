@@ -14,10 +14,10 @@ import (
 )
 
 type Handler struct {
-	svc *service.Service
+	svc service.ServiceInterface
 }
 
-func NewHandler(svc *service.Service) *Handler {
+func NewHandler(svc service.ServiceInterface) *Handler {
 	return &Handler{svc: svc}
 }
 
@@ -52,7 +52,7 @@ func (h *Handler) createAirport(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.svc.CreateAirport(&airport); err != nil {
 		log.Printf("createAirport: service error: %v", err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusInternalServerError)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *Handler) updateAirport(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.svc.UpdateAirport(&airport); err != nil {
 		log.Printf("updateAirport: service error: %v", err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusInternalServerError)
 		return
 	}
 

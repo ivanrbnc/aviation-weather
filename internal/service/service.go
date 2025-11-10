@@ -15,12 +15,22 @@ import (
 )
 
 type Service struct {
-	repo       *repository.Repository
+	repo       repository.RepositoryInterface
 	cfg        *config.Config
 	httpClient *http.Client
 }
 
-func NewService(repo *repository.Repository, cfg *config.Config) *Service {
+type ServiceInterface interface {
+	CreateAirport(a *domain.Airport) error
+	UpdateAirport(a *domain.Airport) error
+	DeleteAirportByFAA(faa string) error
+	GetAirportByFAA(faa string) (*domain.Airport, error)
+	GetAllAirports() ([]domain.Airport, error)
+	SyncAirportByFAA(faa string) (*domain.Airport, error)
+	SyncAllAirports() (int, error)
+}
+
+func NewService(repo repository.RepositoryInterface, cfg *config.Config) ServiceInterface {
 	return &Service{
 		repo: repo,
 		cfg:  cfg,
@@ -31,7 +41,7 @@ func NewService(repo *repository.Repository, cfg *config.Config) *Service {
 }
 
 func (s *Service) CreateAirport(a *domain.Airport) error {
-	return s.repo.Create(a)
+	return s.repo.CreateAirport(a)
 }
 
 func (s *Service) UpdateAirport(a *domain.Airport) error {
@@ -70,7 +80,7 @@ func (s *Service) GetAllAirports() ([]domain.Airport, error) {
 
 func (s *Service) FetchAirportFromAviationAPI(faa string) (*domain.Airport, error) {
 	apiURL := fmt.Sprintf("https://api.aviationapi.com/v1/airports?apt=%s", url.QueryEscape(faa))
-	resp, err := http.Get(apiURL)
+	resp, err := s.httpClient.Get(apiURL)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed for %s: %w", faa, err)
 	}
