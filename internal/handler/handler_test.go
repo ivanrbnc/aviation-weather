@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -57,6 +58,7 @@ func TestGetAllAirports(t *testing.T) {
 		expectedStatus string
 		expectedMsg    string
 	}{
+		// Get all success
 		{
 			name: "success",
 			setupMock: func(m *mocks.ServiceMock) {
@@ -67,6 +69,7 @@ func TestGetAllAirports(t *testing.T) {
 			expectedStatus: "OK",
 			expectedMsg:    "Airports are Fetched",
 		},
+		// Service error
 		{
 			name: "service error",
 			setupMock: func(m *mocks.ServiceMock) {
@@ -193,6 +196,24 @@ func TestCreateAirport(t *testing.T) {
 			},
 			expectedCode: http.StatusBadRequest,
 			expectedJSON: `{"status":"Bad Request","message":"Invalid JSON","data":null}`,
+		},
+		// JSON has empty faa
+		{
+			name: "empty faa",
+			body: func() []byte {
+				airport := sampleAirport // Copy sampleAirport
+				airport.Faa = ""         // Set Faa to empty
+				data, err := json.Marshal(airport)
+				if err != nil {
+					t.Fatalf("Failed to marshal JSON: %v", err)
+				}
+				return data
+			}(),
+			setupMock: func(m *mocks.ServiceMock) {
+				// No call expected
+			},
+			expectedCode: http.StatusBadRequest,
+			expectedJSON: `{"status":"Bad Request","message":"Missing FAA Value","data":null}`,
 		},
 		{
 			name: "service error",
