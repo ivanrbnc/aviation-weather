@@ -157,6 +157,10 @@ func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) syncAllAirports(w http.ResponseWriter, r *http.Request) {
 	updated, err := h.svc.SyncAllAirports()
 	if err != nil {
+		if updated == 0 {
+			utils.EncodeResponseToUser(w, "Error", "No Airport to Sync", nil)
+			return
+		}
 		log.Printf("syncAllAirports: service error: %v", err)
 		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
