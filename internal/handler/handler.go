@@ -59,6 +59,12 @@ func (h *Handler) createAirport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if airport.Faa == "" {
+		log.Printf("createAirport: faa_ident is empty")
+		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Value", nil, http.StatusBadRequest)
+		return
+	}
+
 	if err := h.svc.CreateAirport(&airport); err != nil {
 		log.Printf("createAirport: service error: %v", err)
 		utils.EncodeResponseToUser(w, "Error", "Duplicate Airport", nil, http.StatusInternalServerError)

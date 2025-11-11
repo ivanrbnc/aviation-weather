@@ -36,5 +36,23 @@ services:
       - .:/app
       - /app/.git
 
+  # Scheduler to run sync all every time frame. 
+  scheduler:
+    build: .
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+    command: ["go", "run", "cmd/scheduler/main.go"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/.git
+
 volumes:
   postgres_data:
