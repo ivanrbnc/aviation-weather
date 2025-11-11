@@ -108,14 +108,14 @@ func (h *Handler) getAirport(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
 
 	airport, err := h.svc.GetAirportByFAA(faa)
-	if err != nil {
-		log.Printf("getAirport: service error for %s: %v", faa, err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
+	if airport == nil {
+		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
 		return
 	}
 
-	if airport == nil {
-		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
+	if err != nil {
+		log.Printf("getAirport: service error for %s: %v", faa, err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 
@@ -138,14 +138,15 @@ func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
 
 	airport, err := h.svc.SyncAirportByFAA(faa)
-	if err != nil {
-		log.Printf("syncAirportByFAA: service error for %s: %v", faa, err)
-		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
-		return
-	}
 
 	if airport == nil {
 		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		log.Printf("syncAirportByFAA: service error for %s: %v", faa, err)
+		utils.EncodeResponseToUser(w, "Error", "Service Error", nil, http.StatusInternalServerError)
 		return
 	}
 

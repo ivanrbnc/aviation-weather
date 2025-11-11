@@ -69,12 +69,12 @@ func main() {
 
 	switch {
 	case *down:
-		runMigration("migrations/drop_airport.down.sql", "Migration down")
+		runMigration("migrations/drop_airport.sql", "Migration down")
 		return // Early exit after down—no fill possible
 	case *up:
-		runMigration("migrations/create_airport.up.sql", "Migration up")
+		runMigration("migrations/create_airport.sql", "Migration up")
 		if *fill {
-			runMigration("migrations/fill_airport.fill.sql", "Fill (seed data)")
+			runMigration("migrations/fill_airport.sql", "Fill (seed data)")
 		}
 	}
 }

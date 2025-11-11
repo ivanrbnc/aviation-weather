@@ -79,7 +79,7 @@ func (s *Service) GetAllAirports() ([]domain.Airport, error) {
 	}
 
 	if len(airports) == 0 {
-		return nil, fmt.Errorf("no airports found")
+		return []domain.Airport{}, nil
 	}
 
 	return airports, nil

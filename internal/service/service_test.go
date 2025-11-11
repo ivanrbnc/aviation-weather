@@ -224,8 +224,8 @@ func TestGetAllAirports(t *testing.T) {
 			setupMock: func(m *mocks.RepositoryMock) {
 				m.On("GetAllAirports").Return([]domain.Airport{}, nil)
 			},
-			expected: nil,
-			err:      fmt.Errorf("no airports found"),
+			expected: []domain.Airport{},
+			err:      nil,
 		},
 	}
 

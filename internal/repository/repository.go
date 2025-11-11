@@ -171,12 +171,12 @@ func (r *Repository) GetAllAirports() ([]domain.Airport, error) {
 // GetAirportByFAA fetches an airport by FAA code.
 func (r *Repository) GetAirportByFAA(faaFilter string) (*domain.Airport, error) {
 	query := `
-		SELECT site_number, facility_name, faa, icao, state_code, state_full, county,
-		       city, ownership_type, use_type, manager, manager_phone,
-		       latitude, longitude, airport_status, weather
-		FROM airport
-		WHERE faa = $1
-	`
+        SELECT site_number, facility_name, faa, icao, state_code, state_full, county,
+               city, ownership_type, use_type, manager, manager_phone,
+               latitude, longitude, airport_status, weather
+        FROM airport
+        WHERE faa = $1
+    `
 
 	rows, err := r.db.Query(query, faaFilter)
 	if err != nil {
@@ -184,37 +184,40 @@ func (r *Repository) GetAirportByFAA(faaFilter string) (*domain.Airport, error) 
 	}
 	defer rows.Close()
 
-	var a domain.Airport
-	for rows.Next() {
-		var siteNumber, facilityName, faa, icao, stateCode, stateFull,
-			county, city, ownershipType, useType, manager, managerPhone,
-			latitude, longitude, airportStatus, weather sql.NullString
-
-		if err := rows.Scan(
-			&siteNumber, &facilityName, &faa, &icao, &stateCode, &stateFull,
-			&county, &city, &ownershipType, &useType, &manager, &managerPhone,
-			&latitude, &longitude, &airportStatus, &weather,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan airport row: %w", err)
-		}
-
-		a.SiteNumber = siteNumber.String
-		a.FacilityName = facilityName.String
-		a.Faa = faa.String
-		a.Icao = icao.String
-		a.StateCode = stateCode.String
-		a.StateFull = stateFull.String
-		a.County = county.String
-		a.City = city.String
-		a.OwnershipType = ownershipType.String
-		a.UseType = useType.String
-		a.Manager = manager.String
-		a.ManagerPhone = managerPhone.String
-		a.Latitude = latitude.String
-		a.Longitude = longitude.String
-		a.AirportStatus = airportStatus.String
-		a.Weather = weather.String
+	if !rows.Next() {
+		// No rows found, return nil, nil to indicate no airport exists
+		return nil, nil
 	}
+
+	var a domain.Airport
+	var siteNumber, facilityName, faa, icao, stateCode, stateFull,
+		county, city, ownershipType, useType, manager, managerPhone,
+		latitude, longitude, airportStatus, weather sql.NullString
+
+	if err := rows.Scan(
+		&siteNumber, &facilityName, &faa, &icao, &stateCode, &stateFull,
+		&county, &city, &ownershipType, &useType, &manager, &managerPhone,
+		&latitude, &longitude, &airportStatus, &weather,
+	); err != nil {
+		return nil, fmt.Errorf("failed to scan airport row: %w", err)
+	}
+
+	a.SiteNumber = siteNumber.String
+	a.FacilityName = facilityName.String
+	a.Faa = faa.String
+	a.Icao = icao.String
+	a.StateCode = stateCode.String
+	a.StateFull = stateFull.String
+	a.County = county.String
+	a.City = city.String
+	a.OwnershipType = ownershipType.String
+	a.UseType = useType.String
+	a.Manager = manager.String
+	a.ManagerPhone = managerPhone.String
+	a.Latitude = latitude.String
+	a.Longitude = longitude.String
+	a.AirportStatus = airportStatus.String
+	a.Weather = weather.String
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)

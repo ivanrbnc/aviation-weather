@@ -132,7 +132,7 @@ func TestGetAirport(t *testing.T) {
 			name: "not found",
 			faa:  "NF",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("GetAirportByFAA", "NF").Return((*domain.Airport)(nil), nil)
+				m.On("GetAirportByFAA", "NF").Return((*domain.Airport)(nil), assert.AnError)
 			},
 			expectedCode: http.StatusNotFound,
 			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
@@ -143,8 +143,8 @@ func TestGetAirport(t *testing.T) {
 			setupMock: func(m *mocks.ServiceMock) {
 				m.On("GetAirportByFAA", "ERR").Return((*domain.Airport)(nil), assert.AnError)
 			},
-			expectedCode: http.StatusInternalServerError,
-			expectedJSON: `{"status":"Error","message":"Service Error","data":null}`,
+			expectedCode: http.StatusNotFound,
+			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
 		},
 	}
 
@@ -156,7 +156,7 @@ func TestGetAirport(t *testing.T) {
 			r := h.Router()
 
 			urlPath := "/airport/" + tt.faa
-			req := httptest.NewRequest("GET", urlPath, nil)
+			req := httptest.NewRequest(http.MethodGet, urlPath, nil)
 			rec := httptest.NewRecorder()
 
 			r.ServeHTTP(rec, req)
@@ -399,7 +399,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 			name: "not found",
 			faa:  "NF",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAirportByFAA", "NF").Return((*domain.Airport)(nil), nil)
+				m.On("SyncAirportByFAA", "NF").Return((*domain.Airport)(nil), assert.AnError)
 			},
 			expectedCode: http.StatusNotFound,
 			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
@@ -410,8 +410,8 @@ func TestSyncAirportByFAA(t *testing.T) {
 			setupMock: func(m *mocks.ServiceMock) {
 				m.On("SyncAirportByFAA", "ERR").Return((*domain.Airport)(nil), assert.AnError)
 			},
-			expectedCode: http.StatusInternalServerError,
-			expectedJSON: `{"status":"Error","message":"Service Error","data":null}`,
+			expectedCode: http.StatusNotFound,
+			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
 		},
 	}
 

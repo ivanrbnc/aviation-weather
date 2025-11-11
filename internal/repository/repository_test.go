@@ -362,10 +362,10 @@ func TestGetAirportByFAA(t *testing.T) {
 					sampleAirport.Latitude, sampleAirport.Longitude, sampleAirport.AirportStatus, sampleAirport.Weather,
 				)
 				query := `SELECT site_number, facility_name, faa, icao, state_code, state_full, county,
-				       city, ownership_type, use_type, manager, manager_phone,
-				       latitude, longitude, airport_status, weather
-				FROM airport
-				WHERE faa = \$1`
+                       city, ownership_type, use_type, manager, manager_phone,
+                       latitude, longitude, airport_status, weather
+                FROM airport
+                WHERE faa = \$1`
 				mock.ExpectQuery(query).
 					WithArgs("TST").
 					WillReturnRows(rows)
@@ -378,10 +378,10 @@ func TestGetAirportByFAA(t *testing.T) {
 			faa:  "ERR",
 			setupDB: func(mock sqlmock.Sqlmock) {
 				query := `SELECT site_number, facility_name, faa, icao, state_code, state_full, county,
-				       city, ownership_type, use_type, manager, manager_phone,
-				       latitude, longitude, airport_status, weather
-				FROM airport
-				WHERE faa = \$1`
+                       city, ownership_type, use_type, manager, manager_phone,
+                       latitude, longitude, airport_status, weather
+                FROM airport
+                WHERE faa = \$1`
 				mock.ExpectQuery(query).
 					WithArgs("ERR").
 					WillReturnError(errors.New(anErrorMsg))
@@ -395,15 +395,15 @@ func TestGetAirportByFAA(t *testing.T) {
 			setupDB: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows(fullCols)
 				query := `SELECT site_number, facility_name, faa, icao, state_code, state_full, county,
-				       city, ownership_type, use_type, manager, manager_phone,
-				       latitude, longitude, airport_status, weather
-				FROM airport
-				WHERE faa = \$1`
+                       city, ownership_type, use_type, manager, manager_phone,
+                       latitude, longitude, airport_status, weather
+                FROM airport
+                WHERE faa = \$1`
 				mock.ExpectQuery(query).
 					WithArgs("NF").
 					WillReturnRows(rows)
 			},
-			expected:    &domain.Airport{},
+			expected:    nil,
 			expectedErr: "",
 		},
 		{
@@ -417,10 +417,10 @@ func TestGetAirportByFAA(t *testing.T) {
 					sampleAirport.Latitude, sampleAirport.Longitude, sampleAirport.AirportStatus,
 				)
 				query := `SELECT site_number, facility_name, faa, icao, state_code, state_full, county,
-				       city, ownership_type, use_type, manager, manager_phone,
-				       latitude, longitude, airport_status, weather
-				FROM airport
-				WHERE faa = \$1`
+                       city, ownership_type, use_type, manager, manager_phone,
+                       latitude, longitude, airport_status, weather
+                FROM airport
+                WHERE faa = \$1`
 				mock.ExpectQuery(query).
 					WithArgs("SCAN").
 					WillReturnRows(rows)
