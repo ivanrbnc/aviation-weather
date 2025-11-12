@@ -1,0 +1,175 @@
+{
+	"info": {
+		"_postman_id": "14f26f0c-938a-42f3-993e-6c5906bad2ed",
+		"name": "Aviation Weather",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43073341"
+	},
+	"item": [
+		{
+			"name": "HEALTH CHECK",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/health",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET ALL AIRPORTS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/airports",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"airports"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET AIRPORT BY FAA",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/airport/16A",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"airport",
+						"16A"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CREATE AIRPORT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"site_number\": \"XYZ\",\r\n    \"facility_name\": \"PT. XYZ\",\r\n    \"faa_ident\": \"XXX\",\r\n    \"icao_ident\": \"ABC\",\r\n    \"state\": \"AK\",\r\n    \"state_full\": \"ALASKA\",\r\n    \"county\": \"BETHEL\",\r\n    \"city\": \"JAKARTA\",\r\n    \"ownership\": \"PU\",\r\n    \"use\": \"PU\",\r\n    \"manager\": \"VYN CEZELIANO\",\r\n    \"manager_phone\": \"(666) 021-021021\",\r\n    \"latitude\": \"60-54-21.6000N\",\r\n    \"longitude\": \"162-26-26.1000W\",\r\n    \"status\": \"O\",\r\n    \"weather\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/airport",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"airport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UPDATE AIRPORT",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"site_number\": \"50552.1*A\",\r\n    \"facility_name\": \"NUNAPITCHUK\",\r\n    \"faa_ident\": \"XXX\",\r\n    \"icao_ident\": \"PPIT\",\r\n    \"state\": \"AK\",\r\n    \"state_full\": \"ALASKA\",\r\n    \"county\": \"BETHEL\",\r\n    \"city\": \"NUNAPITCHUK\",\r\n    \"ownership\": \"PU\",\r\n    \"use\": \"PU\",\r\n    \"manager\": \"JOSEPH LARAUX\",\r\n    \"manager_phone\": \"(907) 543-2498\",\r\n    \"latitude\": \"60-54-21.6000N\",\r\n    \"longitude\": \"162-26-26.1000W\",\r\n    \"status\": \"O\",\r\n    \"weather\": \"Light snow\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/airport",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"airport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SYNC ALL",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/sync",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"sync"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SYNC BY FAA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/sync/16A",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"sync",
+						"16A"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE BY FAA",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/airport/XXX",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"airport",
+						"XXX"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

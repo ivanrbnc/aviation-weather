@@ -38,10 +38,10 @@ func (h *Handler) Router() *chi.Mux {
 		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
 	})
 	r.Post("/sync/{faa}", h.syncAirportByFAA)
-	r.Delete("/airports/", func(w http.ResponseWriter, r *http.Request) {
+	r.Delete("/airport/", func(w http.ResponseWriter, r *http.Request) {
 		utils.EncodeResponseToUser(w, "Bad Request", "Missing FAA Parameter", nil, http.StatusBadRequest)
 	})
-	r.Delete("/airports/{faa}", h.deleteAirportByFAA)
+	r.Delete("/airport/{faa}", h.deleteAirportByFAA)
 
 	return r
 }

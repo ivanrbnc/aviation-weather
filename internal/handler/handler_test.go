@@ -355,7 +355,7 @@ func TestDeleteAirportByFAA(t *testing.T) {
 			h := NewHandler(mockSvc)
 			r := h.Router()
 
-			urlPath := "/airports/" + tt.faa
+			urlPath := "/airport/" + tt.faa
 			req := httptest.NewRequest("DELETE", urlPath, nil)
 			rec := httptest.NewRecorder()
 
