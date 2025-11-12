@@ -335,10 +335,20 @@ func TestSyncAllAirports(t *testing.T) {
 
 			s := NewService(mockRepo, &config.Config{}).(*Service) // cast to concrete type so internal helper can be used
 
-			// mock external API calls
-			s.FetchAirportFromAviationAPI = func(faa string) (*domain.Airport, error) {
-				return &domain.Airport{Faa: faa, City: "Jakarta", FacilityName: "Mock Airport"}, nil
+			// mock batch API call (updated to return []domain.Airport)
+			s.FetchAirportsFromAviationAPI = func(faaList []string) ([]domain.Airport, error) {
+				airports := []domain.Airport{}
+				for _, faa := range faaList {
+					airports = append(airports, domain.Airport{
+						Faa:          faa,
+						City:         "Jakarta",
+						FacilityName: "Mock Airport",
+					})
+				}
+				return airports, nil
 			}
+
+			// mock weather API call
 			s.FetchWeatherFromWeatherAPI = func(city string) (string, error) {
 				return "Clear skies", nil
 			}
