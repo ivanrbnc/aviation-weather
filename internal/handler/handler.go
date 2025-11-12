@@ -96,7 +96,6 @@ func (h *Handler) deleteAirportByFAA(w http.ResponseWriter, r *http.Request) {
 
 	err := h.svc.DeleteAirportByFAA(faa)
 	if err != nil {
-		log.Printf("deleteAirportByFAA: error for %s: %v", faa, err)
 		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
 		return
 	}
