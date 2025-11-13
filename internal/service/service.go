@@ -175,7 +175,7 @@ func (s *Service) SyncAllAirports() (int, error) {
 			return
 		}
 
-		// Process the weather & update db
+		// If the batch aviation API works, process the weather & update db
 		for i := range fetchedAirports {
 			weatherText, err := s.FetchWeatherFromWeatherAPI(fetchedAirports[i].City)
 			if err != nil {
