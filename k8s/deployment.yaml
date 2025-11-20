@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aviation-weather
+  namespace: aviation-weather
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aviation-weather
+  template:
+    metadata:
+      labels:
+        app: aviation-weather
+    spec:
+      containers:
+      - name: server
+        image: aviation-weather-service:v1
+        command: ["go", "run", "cmd/server/main.go"]
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secret
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+
+      - name: scheduler
+        image: aviation-weather-service:v1
+        command: ["go", "run", "cmd/scheduler/main.go"]
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secret
+        ports:
+        - containerPort: 8081

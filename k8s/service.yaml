@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aviation-weather
+  namespace: aviation-weather
+spec:
+  type: LoadBalancer
+  selector:
+    app: aviation-weather
+  ports:
+  - port: 80
+    targetPort: 8080

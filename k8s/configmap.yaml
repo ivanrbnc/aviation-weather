@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: aviation-weather
+data:
+  DB_HOST: host.docker.internal
+  DB_PORT: "5430"
+  DB_NAME: aviation_weather
+  DB_USER: postgres
+  APP_PORT: "8080"

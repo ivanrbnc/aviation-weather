@@ -6,12 +6,34 @@ Built with Go, combining [Aviation API](https://www.aviationapi.com/) and [Weath
 
 ## 🚀 Quick Start
 
+### By Docker
 ```bash
 # Start the server
 docker-compose up --build
 
 # Initialize database
 docker-compose exec app go run cmd/migration/main.go --fill
+```
+
+### By Kubernetes & Docker
+```bash
+# Activate Postgresql
+docker-compose up -d postgres
+
+# Initialize database
+go run cmd/migration/main.go --fill
+
+# Create docker image
+docker build -t aviation-weather-service:v1 .
+
+# Initialize kubernetes pods by configuration. Wait for a few seconds or minutes.
+kubectl apply -k k8s/
+
+# Port forward
+kubectl port-forward service/aviation-weather 8080:80 -n aviation-weather
+
+# To delete all kubernetes enabled as aviation-weather
+kubectl delete all --all -n aviation-weather
 ```
 
 API available at `http://localhost:8080`
@@ -48,6 +70,11 @@ WEATHER_API_KEY=YOUR_WEATHER_API_KEY
 # App
 APP_PORT=8080
 ```
+
+or
+
+Update `k8s/secret.yaml` and `k8s/configmap.yaml`
+
 ---
 
-Made with ❤️ using Go
+Made with Go, Docker, Kubernetes, and Postgresql
