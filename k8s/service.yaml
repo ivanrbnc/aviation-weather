@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: aviation-weather
-  namespace: aviation-weather
+  name: aviation-weather # Service name
+  namespace: aviation-weather # Namespace
 spec:
-  type: LoadBalancer
+  type: LoadBalancer # Expose this service externally
   selector:
     app: aviation-weather
   ports:
-  - port: 80
-    targetPort: 8080
+  - port: 80 # External port
+    targetPort: 8080 # Port inside the Pod, so request to <LoadBalancer-IP>:80 → Pod:8080

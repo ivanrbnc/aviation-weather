@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aviation-weather
-  namespace: aviation-weather
+  name: aviation-weather # Deployment name
+  namespace: aviation-weather # Namespace
 spec:
   replicas: 1
   selector:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: server
-        image: aviation-weather-service:v1
+        image: aviation-weather-service:v1 # Docker image
         command: ["go", "run", "cmd/server/main.go"]
         ports:
         - containerPort: 8080
