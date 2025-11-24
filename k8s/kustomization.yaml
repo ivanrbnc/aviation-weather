@@ -2,5 +2,6 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - secret.yaml
+  - job.yaml
   - deployment.yaml
   - service.yaml

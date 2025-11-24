@@ -18,19 +18,19 @@ docker-compose exec app go run cmd/migration/main.go --fill
 ### By Kubernetes & Docker
 ```bash
 # Activate Postgresql & App
-docker-compose up -d postgres app
-
-# Initialize database
-docker-compose exec app go run cmd/migration/main.go --fill
-
-# Stop the App docker, since the seeding is already done.
-docker-compose stop app
+docker-compose up --build -d postgres app
 
 # Create docker image
 docker build -t aviation-weather-service:v1 .
 
 # Initialize kubernetes pods by configuration. Wait for a few seconds or minutes.
 kubectl apply -k k8s/
+
+# Wait for the db-migrate-and-seed completed
+kubectl get pods -n aviation-weather
+
+# Stop the App docker, since the seeding is already done.
+docker-compose stop app
 
 # Port forward
 kubectl port-forward service/aviation-weather 8080:80 -n aviation-weather

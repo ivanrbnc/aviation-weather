@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate-and-seed
+  namespace: aviation-weather
+spec:
+  template:
+    metadata:
+      labels:
+        app: aviation-weather
+    spec:
+      restartPolicy: Never # Not restarting on failure
+      containers:
+      - name: seed
+        image: aviation-weather-service:v1
+        command: ["go", "run", "cmd/migration/main.go", "--fill"]
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secret
+  
+  # Max retry
+  backoffLimit: 3
