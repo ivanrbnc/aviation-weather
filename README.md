@@ -18,10 +18,10 @@ docker-compose exec app go run cmd/migration/main.go --fill
 ### By Kubernetes & Docker
 ```bash
 # Activate Postgresql
-docker-compose up -d postgres
+docker-compose up -d postgres app
 
 # Initialize database
-go run cmd/migration/main.go --fill
+docker-compose exec app go run cmd/migration/main.go --fill
 
 # Create docker image
 docker build -t aviation-weather-service:v1 .
