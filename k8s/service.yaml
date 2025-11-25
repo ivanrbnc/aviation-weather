@@ -4,7 +4,7 @@ metadata:
   name: aviation-weather # Service name
   namespace: aviation-weather # Namespace
 spec:
-  type: LoadBalancer # Expose this service externally
+  type: ClusterIP # Expose this service internally. LoadBalancer = External
   selector:
     app: aviation-weather
   ports:

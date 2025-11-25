@@ -13,33 +13,35 @@ docker-compose up --build
 
 # Initialize database
 docker-compose exec app go run cmd/migration/main.go --fill
+
+API available at http://localhost:8080
 ```
 
 ### By Kubernetes & Docker
 ```bash
+# Install NGINX Ingress Controller (Once)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+
+# Wait for the ingress-nginx-controller running
+kubectl get pods -n ingress-nginx
+
 # Activate Postgresql & App
-docker-compose up --build -d postgres app
+docker-compose up --build -d postgres
 
 # Create docker image
 docker build -t aviation-weather-service:v1 .
 
-# Initialize kubernetes pods by configuration. Wait for a few seconds or minutes.
+# Initialize kubernetes pods by configuration.
 kubectl apply -k k8s/
 
 # Wait for the db-migrate-and-seed completed
 kubectl get pods -n aviation-weather
 
-# Stop the App docker, since the seeding is already done.
-docker-compose stop app
-
-# Port forward
-kubectl port-forward service/aviation-weather 8080:80 -n aviation-weather
+API available at http://localhost
 
 # To delete all kubernetes enabled as aviation-weather
 kubectl delete all --all -n aviation-weather
 ```
-
-API available at `http://localhost:8080`
 
 ## 📡 Endpoints
 

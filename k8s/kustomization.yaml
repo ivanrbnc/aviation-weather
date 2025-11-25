@@ -5,3 +5,4 @@ resources:
   - job.yaml
   - deployment.yaml
   - service.yaml
+  - ingress.yaml
