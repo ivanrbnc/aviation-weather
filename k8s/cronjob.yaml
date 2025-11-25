@@ -21,5 +21,5 @@ spec:
             args:
             - -X
             - POST
-            - http://aviation-weather.aviation-weather.svc.cluster.local/sync
+            - http://aviation-weather-service.aviation-weather.svc.cluster.local/sync
               # <service>.<namespace>.svc.cluster.local
