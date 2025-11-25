@@ -13,6 +13,6 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: aviation-weather
+              name: aviation-weather-service
               port:
                 number: 80
