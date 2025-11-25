@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: aviation-weather # Service name
+  name: aviation-weather-service # Service name
   namespace: aviation-weather # Namespace
 spec:
   type: ClusterIP # Expose this service internally. LoadBalancer = External

@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: aviation-weather-local
+  name: aviation-weather-ingress
   namespace: aviation-weather
 spec:
   ingressClassName: nginx

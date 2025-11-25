@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sync-trigger
+  namespace: aviation-weather
+spec:
+  schedule: "*/15 * * * *"   # Every 15 minutes
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: aviation-weather
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: sync
+            image: curlimages/curl:latest
+            args:
+            - -X
+            - POST
+            - http://aviation-weather.aviation-weather.svc.cluster.local/sync
+              # <service>.<namespace>.svc.cluster.local

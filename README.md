@@ -13,8 +13,6 @@ docker-compose up --build
 
 # Initialize database
 docker-compose exec app go run cmd/migration/main.go --fill
-
-API available at http://localhost:8080
 ```
 
 ### By Kubernetes & Docker
@@ -37,11 +35,15 @@ kubectl apply -k k8s/
 # Wait for the db-migrate-and-seed completed
 kubectl get pods -n aviation-weather
 
-API available at http://localhost
+# Monitoring the server
+kubectl logs -f deployment/aviation-weather-deployment -c server -n aviation-weather
 
 # To delete all kubernetes enabled as aviation-weather
-kubectl delete all --all -n aviation-weather
+kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
+
+API available at http://localhost:8080 for Docker
+API available at http://localhost for Docker + Kubernetes
 
 ## 📡 Endpoints
 

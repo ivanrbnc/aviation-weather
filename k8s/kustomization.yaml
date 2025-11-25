@@ -3,6 +3,7 @@ resources:
   - configmap.yaml
   - secret.yaml
   - job.yaml
+  - cronjob.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

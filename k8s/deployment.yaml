@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aviation-weather # Deployment name
+  name: aviation-weather-deployment # Deployment name
   namespace: aviation-weather # Namespace
 spec:
   replicas: 1
