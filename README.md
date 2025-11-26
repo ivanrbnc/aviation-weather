@@ -42,8 +42,8 @@ kubectl logs -f deployment/aviation-weather-deployment -c server -n aviation-wea
 kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
 
-API available at http://localhost:8080 for Docker
-API available at http://localhost for Docker + Kubernetes
+- API available at http://localhost:8080 for Docker
+- API available at http://localhost for Docker + Kubernetes
 
 ## 📡 Endpoints
 
