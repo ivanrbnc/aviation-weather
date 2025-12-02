@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+    
+    parameters {
+        choice(name: 'CONTAINER', choices: ['server', 'scheduler'], description: 'Container to monitor')
+        string(name: 'DURATION', defaultValue: '10', description: 'Minutes (0 = indefinite)')
+    }
+    
+    environment {
+        K8S_NAMESPACE = "aviation-weather"
+        KUBECONFIG_CREDENTIAL = "kubeconfig"
+    }
+    
+    stages {
+        stage('Stream Logs') {
+            steps {
+                script {
+                    echo "Monitoring ${params.CONTAINER} logs..."
+                    withKubeConfig([credentialsId: KUBECONFIG_CREDENTIAL]) {
+                        if (params.DURATION == '0') {
+                            sh """
+                                kubectl logs -f deployment/aviation-weather-deployment -c ${params.CONTAINER} -n ${K8S_NAMESPACE}
+                            """
+                        } else {
+                            timeout(time: params.DURATION.toInteger(), unit: 'MINUTES') {
+                                sh """
+                                    kubectl logs -f deployment/aviation-weather-deployment -c ${params.CONTAINER} -n ${K8S_NAMESPACE}
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

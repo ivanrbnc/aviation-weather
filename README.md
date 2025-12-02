@@ -88,6 +88,14 @@ docker restart jenkins
 
 # Click `Build Now`
 
+# If you want to create real-time monitor in Jenkins, you can:
+# Open http://localhost:8090/view/all/newJob for deployments
+# Item name: aviation-weather-monitor
+# Item type: pipeline
+# Configure > Pipeline > Definition: Pipeline script. Copy Jenkinsfile.monitor content here.
+
+# Click `Build with Parameters`
+
 # To delete all kubernetes enabled as aviation-weather
 kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
