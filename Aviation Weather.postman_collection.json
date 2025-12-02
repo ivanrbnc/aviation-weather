@@ -25,6 +25,23 @@
 			"response": []
 		},
 		{
+			"name": "KUBE - HEALTH CHECK",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost/health",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "GET ALL AIRPORTS",
 			"request": {
 				"method": "GET",
@@ -43,6 +60,23 @@
 			"response": []
 		},
 		{
+			"name": "KUBE - GET ALL AIRPORTS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost/airports",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"airports"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "GET AIRPORT BY FAA",
 			"request": {
 				"method": "GET",
@@ -53,6 +87,24 @@
 						"localhost"
 					],
 					"port": "8080",
+					"path": [
+						"airport",
+						"16A"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "KUBE - GET AIRPORT BY FAA",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost/airport/16A",
+					"host": [
+						"localhost"
+					],
 					"path": [
 						"airport",
 						"16A"
@@ -89,6 +141,32 @@
 			"response": []
 		},
 		{
+			"name": "KUBE - CREATE AIRPORT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"site_number\": \"XYZ\",\r\n    \"facility_name\": \"PT. XYZ\",\r\n    \"faa_ident\": \"XXX\",\r\n    \"icao_ident\": \"ABC\",\r\n    \"state\": \"AK\",\r\n    \"state_full\": \"ALASKA\",\r\n    \"county\": \"BETHEL\",\r\n    \"city\": \"JAKARTA\",\r\n    \"ownership\": \"PU\",\r\n    \"use\": \"PU\",\r\n    \"manager\": \"VYN CEZELIANO\",\r\n    \"manager_phone\": \"(666) 021-021021\",\r\n    \"latitude\": \"60-54-21.6000N\",\r\n    \"longitude\": \"162-26-26.1000W\",\r\n    \"status\": \"O\",\r\n    \"weather\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost/airport",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"airport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "UPDATE AIRPORT",
 			"request": {
 				"method": "PUT",
@@ -116,6 +194,32 @@
 			"response": []
 		},
 		{
+			"name": "KUBE - UPDATE AIRPORT",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"site_number\": \"50552.1*A\",\r\n    \"facility_name\": \"NUNAPITCHUK\",\r\n    \"faa_ident\": \"XXX\",\r\n    \"icao_ident\": \"PPIT\",\r\n    \"state\": \"AK\",\r\n    \"state_full\": \"ALASKA\",\r\n    \"county\": \"BETHEL\",\r\n    \"city\": \"NUNAPITCHUK\",\r\n    \"ownership\": \"PU\",\r\n    \"use\": \"PU\",\r\n    \"manager\": \"JOSEPH LARAUX\",\r\n    \"manager_phone\": \"(907) 543-2498\",\r\n    \"latitude\": \"60-54-21.6000N\",\r\n    \"longitude\": \"162-26-26.1000W\",\r\n    \"status\": \"O\",\r\n    \"weather\": \"Light snow\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost/airport",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"airport"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "SYNC ALL",
 			"request": {
 				"method": "POST",
@@ -126,6 +230,23 @@
 						"localhost"
 					],
 					"port": "8080",
+					"path": [
+						"sync"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "KUBE - SYNC ALL",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "localhost/sync",
+					"host": [
+						"localhost"
+					],
 					"path": [
 						"sync"
 					]
@@ -153,6 +274,24 @@
 			"response": []
 		},
 		{
+			"name": "KUBE - SYNC BY FAA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "localhost/sync/16A",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"sync",
+						"16A"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "DELETE BY FAA",
 			"request": {
 				"method": "DELETE",
@@ -163,6 +302,24 @@
 						"localhost"
 					],
 					"port": "8080",
+					"path": [
+						"airport",
+						"XXX"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "KUBE - DELETE BY FAA",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost/airport/XXX",
+					"host": [
+						"localhost"
+					],
 					"path": [
 						"airport",
 						"XXX"
