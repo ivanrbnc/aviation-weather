@@ -44,6 +44,12 @@ kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weathe
 
 ### By Docker & Jenkins
 ```bash
+# Install NGINX Ingress Controller (Once)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+
+# Wait for the ingress-nginx-controller running
+kubectl get pods -n ingress-nginx
+
 # Activate Postgresql
 docker-compose up --build -d postgres
 
