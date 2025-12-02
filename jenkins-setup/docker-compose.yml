@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Update D:/vyanry/aviation-weather to your aviation-weather path
+      - D:/vyanry/aviation-weather:/workspace/aviation-weather
+    container_name: jenkins
+
+volumes:  
+  jenkins_home:

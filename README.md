@@ -15,7 +15,7 @@ docker-compose up --build
 docker-compose exec app go run cmd/migration/main.go --fill
 ```
 
-### By Kubernetes & Docker
+### By Docker & Kubernetes
 ```bash
 # Install NGINX Ingress Controller (Once)
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
@@ -23,7 +23,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 # Wait for the ingress-nginx-controller running
 kubectl get pods -n ingress-nginx
 
-# Activate Postgresql & App
+# Activate Postgresql
 docker-compose up --build -d postgres
 
 # Create docker image
@@ -42,8 +42,49 @@ kubectl logs -f deployment/aviation-weather-deployment -c server -n aviation-wea
 kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
 
+### By Docker & Jenkins
+```bash
+# Activate Postgresql
+docker-compose up --build -d postgres
+
+# Create a folder outside aviation-weather. Copy the docker-compose.yml from jenkins-setup.
+# Make sure to update the docker-compose.yml
+
+# Up the Jenkins
+docker-compose up -d
+
+# Get initial admin password to login the localhost:8090
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+
+# Install docker cli to your jenkins
+docker exec -u root jenkins bash -c "apt-get update && apt-get install -y docker.io"
+docker exec -u root jenkins chmod 666 /var/run/docker.sock
+
+# Install kubectl to your jenkins
+docker exec -u root jenkins bash -c "apt-get update && apt-get install -y docker.io curl && curl -LO 'https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl' && chmod +x kubectl && mv kubectl /usr/local/bin/kubectl && chmod 666 /var/run/docker.sock"
+
+# Restart jenkins
+docker restart jenkins
+
+# Open http://localhost:8090/manage/credentials/ for manage credentials
+# Kind: Secret file
+# File: Kube's config file. Example: C:\Users\vyanry\.kube\config
+# ID: kubeconfig
+# Description: Kubernetes Config
+
+# Open http://localhost:8090/view/all/newJob for deployments
+# Item name: aviation-weather-deploy
+# Item type: pipeline
+# Configure > Pipeline > Definition: Pipeline script. Copy Jenkinsfile content here.
+
+# Click `Build Now`
+
+# To delete all kubernetes enabled as aviation-weather
+kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
+```
+
 - API available at http://localhost:8080 for Docker
-- API available at http://localhost for Docker + Kubernetes
+- API available at http://localhost for Docker + Kubernetes or Docker + Jenkins
 
 ## 📡 Endpoints
 

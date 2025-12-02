@@ -1,0 +1,111 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = "aviation-weather-service"
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        K8S_NAMESPACE = "aviation-weather"
+        KUBECONFIG_CREDENTIAL = "kubeconfig"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Using mounted project directory...'
+                sh 'cp -r /workspace/aviation-weather/* ${WORKSPACE}/'
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building Docker image...'
+                    sh """
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    echo 'Deploying to Kubernetes...'
+                    withKubeConfig([credentialsId: KUBECONFIG_CREDENTIAL]) {
+                        sh """
+                            # Apply all Kubernetes configurations
+                            kubectl apply -f k8s/namespace.yaml
+                            kubectl apply -f k8s/configmap.yaml
+                            kubectl apply -f k8s/secret.yaml
+                            kubectl apply -f k8s/service.yaml
+                            kubectl apply -f k8s/deployment.yaml
+                            kubectl apply -f k8s/ingress.yaml
+                            kubectl apply -f k8s/cronjob.yaml
+                            
+                            echo "Waiting for deployment to be ready..."
+                            kubectl rollout status deployment/aviation-weather-deployment -n ${K8S_NAMESPACE} --timeout=5m
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Run Database Migration') {
+            steps {
+                script {
+                    echo 'Running database migration...'
+                    withKubeConfig([credentialsId: KUBECONFIG_CREDENTIAL]) {
+                        sh """
+                            # Delete old job if exists
+                            kubectl delete job aviation-weather-db-migrate-and-seed -n ${K8S_NAMESPACE} --ignore-not-found
+                            
+                            # Apply migration job
+                            kubectl apply -f k8s/job.yaml
+                            
+                            echo "Waiting for migration to complete..."
+                            kubectl wait --for=condition=complete --timeout=5m job/aviation-weather-db-migrate-and-seed -n ${K8S_NAMESPACE}
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo 'Verifying deployment...'
+                    withKubeConfig([credentialsId: KUBECONFIG_CREDENTIAL]) {
+                        sh """
+                            echo "=== Pods Status ==="
+                            kubectl get pods -n ${K8S_NAMESPACE}
+                            
+                            echo "=== Services ==="
+                            kubectl get svc -n ${K8S_NAMESPACE}
+                            
+                            echo "=== Ingress ==="
+                            kubectl get ingress -n ${K8S_NAMESPACE}
+                            
+                            echo "=== Deployment Info ==="
+                            kubectl describe deployment aviation-weather-deployment -n ${K8S_NAMESPACE}
+                        """
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '✅ Deployment successful!'
+            echo 'Your aviation weather service is now running in Kubernetes!'
+        }
+        failure {
+            echo '❌ Deployment failed!'
+            echo 'Check the console output above for errors.'
+        }
+        always {
+            echo 'Build completed. Check Kubernetes dashboard for application status.'
+        }
+    }
+}
