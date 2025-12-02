@@ -42,7 +42,7 @@ kubectl logs -f deployment/aviation-weather-deployment -c server -n aviation-wea
 kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
 
-### By Docker & Jenkins
+### By Docker & Kubernetes via Jenkins
 ```bash
 # Install NGINX Ingress Controller (Once)
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
