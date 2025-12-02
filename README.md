@@ -72,6 +72,9 @@ docker exec -u root jenkins bash -c "apt-get update && apt-get install -y docker
 # Restart jenkins
 docker restart jenkins
 
+# Open http://localhost:8090/manage/pluginManager/available for manage plugin
+# Make sure "Kubernetes CLI Plugin", "Docker pipeline", "Pipeline: stage view" was installed
+
 # Open http://localhost:8090/manage/credentials/ for manage credentials
 # Kind: Secret file
 # File: Kube's config file. Example: C:\Users\vyanry\.kube\config
