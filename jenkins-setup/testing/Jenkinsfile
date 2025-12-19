@@ -2,21 +2,25 @@ pipeline {
     agent {
         docker {
             image 'golang:1.24'
-            reuseNode true
         }
     }
 
     environment {
-        GO111MODULE = "on"
-        GOPROXY = "https://proxy.golang.org,direct"
+        GO111MODULE = "on"  // Enable Go modules for dependency management
+        GOPROXY = "direct"  // Download direct from source
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                echo 'Using mounted project directory...'
+                sh 'cp -r /workspace/aviation-weather/* ${WORKSPACE}/'
+            }
+        }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    set -e
                     go version
                     go mod download
                     go mod verify
@@ -27,17 +31,20 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                    set -e
-
                     echo "Running tests with coverage..."
-                    go test ./... -v -coverprofile=coverage.out -covermode=atomic
+                    go test ./... -v -coverprofile=coverage.out
 
                     echo "Generating coverage reports..."
-                    go tool cover -func=coverage.out | tee coverage.txt
                     go tool cover -html=coverage.out -o coverage.html
+                '''
+            }
+        }
 
-                    echo "📊 Coverage Summary:"
-                    tail -1 coverage.txt
+        stage('Golang Summary Reports') {
+            steps {
+                sh '''
+                    echo "Generating golang summary reports..."
+                    go tool cover -func=coverage.out | tee coverage.txt
                 '''
             }
         }
@@ -45,9 +52,12 @@ pipeline {
 
     post {
         always {
+            // Safety net: don't fail build if archiving/publishing fails
             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                // Save coverage files as downloadable artifacts
                 archiveArtifacts artifacts: 'coverage.out,coverage.txt,coverage.html', allowEmptyArchive: true
 
+                // Publish HTML report for viewing directly in Jenkins
                 publishHTML(target: [
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,

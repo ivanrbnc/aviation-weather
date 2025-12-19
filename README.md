@@ -42,7 +42,7 @@ kubectl logs -f deployment/aviation-weather-deployment -c server -n aviation-wea
 kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
 
-### By Docker & Kubernetes via Jenkins
+### By Docker & Kubernetes via Jenkins (including SonarQube)
 ```bash
 # Install NGINX Ingress Controller (Once)
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
@@ -52,6 +52,25 @@ kubectl get pods -n ingress-nginx
 
 # Activate Postgresql
 docker-compose up --build -d postgres
+
+# Create a folder outside aviation-weather. Copy the docker-compose.yml from sonarqube-setup.
+
+# Up the SonarQube
+docker-compose up -d
+
+# If there's troubleshoot, go to http://localhost:9000/setup to first upgrade the SonarQube's db
+# Open http://localhost:9000/account/security for SonarQube token generation
+# Name: jenkins
+# Type: user token
+# Expires in: no expiry
+
+# Copy the Token (!)
+
+# Open http://localhost:9000/projects/create to create the project
+# Local folder
+# Project key: aviation-weather
+# Display name: Aviation Weather
+# Use Global settings
 
 # Create a folder outside aviation-weather. Copy the docker-compose.yml from jenkins-setup.
 # Make sure to update the docker-compose.yml
@@ -73,7 +92,7 @@ docker exec -u root jenkins bash -c "apt-get update && apt-get install -y docker
 docker restart jenkins
 
 # Open http://localhost:8090/manage/pluginManager/available for manage plugin
-# Make sure "Kubernetes CLI Plugin", "Docker pipeline", "Pipeline: stage view" was installed
+# Make sure "Kubernetes CLI Plugin", "Docker pipeline", "Pipeline: stage view", "SonarQube Scanner" was installed
 
 # Open http://localhost:8090/manage/credentials/ for manage credentials
 # Kind: Secret file
@@ -81,23 +100,34 @@ docker restart jenkins
 # ID: kubeconfig
 # Description: Kubernetes Config
 
-# Open http://localhost:8090/view/all/newJob for deployments
+# Open http://localhost:8090/manage/credentials/ for manage credentials
+# Kind: Secret text
+# Scope: Global
+# Secret: paste your SonarQube token
+# ID: sonarqube-token
+# Description: SonarQube authentication token
+
+# Open http://localhost:8090/view/all/newJob for creating deployments
 # Item name: aviation-weather-deploy
 # Item type: pipeline
 # Configure > Pipeline > Definition: Pipeline script. Copy jenkins-setup/deployment/Jenkinsfile content here.
 
 # Click `Build Now`
 
-# Create docker image
+# Create this docker image to make sure the Kubernetes deployment went well
 docker build -t aviation-weather-service:v1 .
 
-# Open http://localhost:8090/view/all/newJob for testing
+# Open http://localhost:8090/view/all/newJob for creating testing
 # Item name: aviation-weather-test
 # Item type: pipeline
 # Configure > Pipeline > Definition: Pipeline script. Copy jenkins-setup/testing/Jenkinsfile content here.
 
+# Click `Build Now`
+
+# Open http://localhost:9000/dashboard?id=aviation-weather&codeScope=overall to see the results of your sonarqube
+
 # To delete all kubernetes enabled as aviation-weather
-    kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
+kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
 ```
 
 ### Report via Docker & k6
