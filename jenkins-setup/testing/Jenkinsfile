@@ -6,8 +6,10 @@ pipeline {
     }
 
     environment {
-        GO111MODULE = "on"  // Enable Go modules for dependency management
-        GOPROXY = "direct"  // Download direct from source
+        GO111MODULE = "on"
+        GOPROXY = "direct"
+        SONAR_HOST_URL = "http://host.docker.internal:9000"
+        SONAR_TOKEN = credentials('sonarqube-token')
     }
 
     stages {
@@ -48,6 +50,35 @@ pipeline {
                 '''
             }
         }
+
+        stage('SonarQube Analysis') {
+            steps {
+                sh '''
+                    echo "Installing system dependencies..."
+                    apt-get update -y
+                    apt-get install -y wget unzip
+
+                    echo "Installing SonarQube Scanner..."
+                    rm -rf sonar-scanner-6.2.1.4610-linux-x64*
+                    wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.2.1.4610-linux-x64.zip
+                    unzip -oq sonar-scanner-cli-6.2.1.4610-linux-x64.zip
+
+                    export PATH="$PWD/sonar-scanner-6.2.1.4610-linux-x64/bin:$PATH"
+
+                    echo "Running SonarQube analysis..."
+                    sonar-scanner \
+                    -Dsonar.projectKey=aviation-weather \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=${SONAR_HOST_URL} \
+                    -Dsonar.token=${SONAR_TOKEN} \
+                    -Dsonar.go.coverage.reportPaths=coverage.out \
+                    -Dsonar.exclusions=**/*_test.go,**/vendor/**
+
+                    echo "✅ SonarQube analysis complete!"
+                '''
+            }
+        }
+
     }
 
     post {
@@ -71,6 +102,7 @@ pipeline {
 
         success {
             echo '✅ Tests passed successfully!'
+            echo '📊 Check SonarQube dashboard at http://localhost:9000'
         }
 
         failure {
