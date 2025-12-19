@@ -6,10 +6,10 @@ pipeline {
     }
 
     environment {
-        GO111MODULE = "on"
-        GOPROXY = "direct"
-        SONAR_HOST_URL = "http://host.docker.internal:9000"
-        SONAR_TOKEN = credentials('sonarqube-token')
+        GO111MODULE = "on" // Enable Go modules for dependency management
+        GOPROXY = "direct" // Download direct from source
+        SONAR_HOST_URL = "http://host.docker.internal:9000" // Access host's SonarQube
+        SONAR_TOKEN = credentials('sonarqube-token') // Sonarqube's Jenkins credential
     }
 
     stages {
