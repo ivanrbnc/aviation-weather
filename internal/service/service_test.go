@@ -260,6 +260,10 @@ func TestSyncAirportByFAA(t *testing.T) {
 			name: "repo update error",
 			faa:  "TST",
 			setupMock: func(m *mocks.RepositoryMock) {
+				m.On("GetAirportByFAA", "TST").Return(&domain.Airport{
+					Faa:  "TST",
+					City: "Old City",
+				}, nil)
 				m.On("UpdateAirport", mock.Anything).Return(assert.AnError)
 			},
 			expected: nil,

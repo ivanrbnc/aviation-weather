@@ -381,7 +381,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 			name: "success",
 			faa:  "TST",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAirportByFAA", "TST").Return(&sampleAirport, nil)
+				m.On("SyncAirportQueued", "TST").Return(&sampleAirport, nil) // Changed from SyncAirportByFAA
 			},
 			expectedCode: http.StatusOK,
 			expectedJSON: `{"status":"OK","message":"Airport is Synced","data":{"site_number":"12345","facility_name":"Test Airport","faa_ident":"TST","icao_ident":"KTST","state":"CA","state_full":"California","county":"Test County","city":"Test City","ownership":"Public","use":"Public Use","manager":"Test Manager","manager_phone":"123-456-7890","latitude":"34.0522","longitude":"-118.2437","status":"Open","weather":"Clear"}}`,
@@ -399,7 +399,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 			name: "not found",
 			faa:  "NF",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAirportByFAA", "NF").Return((*domain.Airport)(nil), assert.AnError)
+				m.On("SyncAirportQueued", "NF").Return((*domain.Airport)(nil), assert.AnError) // Changed from SyncAirportByFAA
 			},
 			expectedCode: http.StatusNotFound,
 			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
@@ -408,7 +408,7 @@ func TestSyncAirportByFAA(t *testing.T) {
 			name: "service error",
 			faa:  "ERR",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAirportByFAA", "ERR").Return((*domain.Airport)(nil), assert.AnError)
+				m.On("SyncAirportQueued", "ERR").Return((*domain.Airport)(nil), assert.AnError) // Changed from SyncAirportByFAA
 			},
 			expectedCode: http.StatusNotFound,
 			expectedJSON: `{"status":"Error","message":"Airport Not Found","data":null}`,
@@ -446,7 +446,7 @@ func TestSyncAllAirports(t *testing.T) {
 		{
 			name: "success",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAllAirports").Return(1, nil)
+				m.On("SyncAllAirportsQueued").Return(1, nil) // Changed from SyncAllAirports
 			},
 			expectedCode: http.StatusOK,
 			expectedJSON: `{"status":"OK","message":"1 Airports are Synced","data":null}`,
@@ -454,7 +454,7 @@ func TestSyncAllAirports(t *testing.T) {
 		{
 			name: "no airports updated",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAllAirports").Return(0, nil)
+				m.On("SyncAllAirportsQueued").Return(0, nil) // Changed from SyncAllAirports
 			},
 			expectedCode: http.StatusOK,
 			expectedJSON: `{"status":"OK","message":"0 Airports are Synced","data":null}`,
@@ -462,7 +462,7 @@ func TestSyncAllAirports(t *testing.T) {
 		{
 			name: "no airports to sync with error",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAllAirports").Return(0, assert.AnError)
+				m.On("SyncAllAirportsQueued").Return(0, assert.AnError) // Changed from SyncAllAirports
 			},
 			expectedCode: http.StatusOK,
 			expectedJSON: `{"status":"Error","message":"No Airport to Sync","data":null}`,
@@ -470,7 +470,7 @@ func TestSyncAllAirports(t *testing.T) {
 		{
 			name: "service error with updates",
 			setupMock: func(m *mocks.ServiceMock) {
-				m.On("SyncAllAirports").Return(1, assert.AnError)
+				m.On("SyncAllAirportsQueued").Return(1, assert.AnError) // Changed from SyncAllAirports
 			},
 			expectedCode: http.StatusInternalServerError,
 			expectedJSON: `{"status":"Error","message":"Service Error","data":null}`,

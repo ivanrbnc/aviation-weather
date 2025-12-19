@@ -18,7 +18,7 @@ docker-compose exec app go run cmd/migration/main.go --fill
 ### By Docker & Kubernetes
 ```bash
 # Install NGINX Ingress Controller (Once)
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.1/deploy/static/provider/cloud/deploy.yaml
 
 # Wait for the ingress-nginx-controller running
 kubectl get pods -n ingress-nginx
@@ -84,16 +84,48 @@ docker restart jenkins
 # Open http://localhost:8090/view/all/newJob for deployments
 # Item name: aviation-weather-deploy
 # Item type: pipeline
-# Configure > Pipeline > Definition: Pipeline script. Copy Jenkinsfile content here.
+# Configure > Pipeline > Definition: Pipeline script. Copy jenkins-setup/deployment/Jenkinsfile content here.
 
 # Click `Build Now`
 
+# Create docker image
+docker build -t aviation-weather-service:v1 .
+
+# Open http://localhost:8090/view/all/newJob for testing
+# Item name: aviation-weather-test
+# Item type: pipeline
+# Configure > Pipeline > Definition: Pipeline script. Copy jenkins-setup/testing/Jenkinsfile content here.
+
 # To delete all kubernetes enabled as aviation-weather
-kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
+    kubectl delete all,ingress,cronjob,pvc,configmap,secret --all -n aviation-weather
+```
+
+### Report via Docker & k6
+```bash
+# Start the server
+docker-compose up --build
+
+# Initialize database
+docker-compose exec app go run cmd/migration/main.go --fill
+
+# Pull image `k6` in Docker Hub
+docker pull grafana/k6
+
+# Run k6 via `k6` image
+# Update D:\vyanry\aviation-weather to your aviation-weather path
+docker run --rm -v "D:\vyanry\aviation-weather:/scripts" `
+  -e K6_WEB_DASHBOARD=true `
+  -e K6_WEB_DASHBOARD_EXPORT=/scripts/test/report.html `
+  -p 5665:5665 `
+  grafana/k6 run /scripts/test/aviation_weather_test.js
+
+# Open http://localhost:5665/ while it's running
 ```
 
 - API available at http://localhost:8080 for Docker
 - API available at http://localhost for Docker + Kubernetes or Docker + Jenkins
+- (optional) Jenkins available at http://localhost:8090
+- (optional) Report k6 available at http://localhost:5665/
 
 ## 📡 Endpoints
 

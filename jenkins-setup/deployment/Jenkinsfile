@@ -3,7 +3,6 @@ pipeline {
     
     environment {
         DOCKER_IMAGE = "aviation-weather-service"
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
         K8S_NAMESPACE = "aviation-weather"
         KUBECONFIG_CREDENTIAL = "kubeconfig"
     }
@@ -21,8 +20,7 @@ pipeline {
                 script {
                     echo 'Building Docker image...'
                     sh """
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                        docker build -t ${DOCKER_IMAGE}:v1 .
                     """
                 }
             }

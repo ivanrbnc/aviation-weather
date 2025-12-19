@@ -1,0 +1,70 @@
+pipeline {
+    agent {
+        docker {
+            image 'golang:1.24'
+            reuseNode true
+        }
+    }
+
+    environment {
+        GO111MODULE = "on"
+        GOPROXY = "https://proxy.golang.org,direct"
+    }
+
+    stages {
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    set -e
+                    go version
+                    go mod download
+                    go mod verify
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    set -e
+
+                    echo "Running tests with coverage..."
+                    go test ./... -v -coverprofile=coverage.out -covermode=atomic
+
+                    echo "Generating coverage reports..."
+                    go tool cover -func=coverage.out | tee coverage.txt
+                    go tool cover -html=coverage.out -o coverage.html
+
+                    echo "📊 Coverage Summary:"
+                    tail -1 coverage.txt
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                archiveArtifacts artifacts: 'coverage.out,coverage.txt,coverage.html', allowEmptyArchive: true
+
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '.',
+                    reportFiles: 'coverage.html',
+                    reportName: 'Coverage Report'
+                ])
+            }
+        }
+
+        success {
+            echo '✅ Tests passed successfully!'
+        }
+
+        failure {
+            echo '❌ Tests failed! Check console output for details.'
+        }
+    }
+}

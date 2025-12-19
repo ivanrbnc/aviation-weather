@@ -136,7 +136,8 @@ func (h *Handler) getAllAirports(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 	faa := chi.URLParam(r, "faa")
 
-	airport, err := h.svc.SyncAirportByFAA(faa)
+	// airport, err := h.svc.SyncAirportByFAA(faa)
+	airport, err := h.svc.SyncAirportQueued(faa)
 
 	if airport == nil {
 		utils.EncodeResponseToUser(w, "Error", "Airport Not Found", nil, http.StatusNotFound)
@@ -154,7 +155,9 @@ func (h *Handler) syncAirportByFAA(w http.ResponseWriter, r *http.Request) {
 
 // syncAllAirports: Bulk updates all airports with real API data.
 func (h *Handler) syncAllAirports(w http.ResponseWriter, r *http.Request) {
-	updated, err := h.svc.SyncAllAirports()
+	// updated, err := h.svc.SyncAllAirports()
+	updated, err := h.svc.SyncAllAirportsQueued()
+
 	if err != nil {
 		if updated == 0 {
 			utils.EncodeResponseToUser(w, "Error", "No Airport to Sync", nil)
